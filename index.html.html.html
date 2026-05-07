@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -356,7 +357,6 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       <button class="nb" onclick="go('comissoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Comissões</button>
       <button class="nb" onclick="go('relatorios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Relatórios</button>
       <button class="nb" onclick="go('meu-resumo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Meu Resumo</button>
-      <button class="nb" onclick="go('acessos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Controle de Acessos</button>
       <button class="nb" onclick="go('gestao-gerencia',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Gestão Gerência</button>
       <button class="nb" onclick="go('configuracoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurações</button>
     </div>
@@ -1388,7 +1388,7 @@ const ACESSO_LABELS = {
 
 // O que cada nível pode ver (ids das seções do menu)
 const ACESSO_MENU = {
-  master:       ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','financeiro','comissoes','relatorios','acessos','configuracoes','gestao-gerencia'],
+  master:       ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','financeiro','comissoes','relatorios','configuracoes','gestao-gerencia'],
   gerencia:     ['dashboard','agenda','comanda','clientes','servicos','estoque','venda-produto','venda-prof','relatorios','gestao-gerencia'],
   recepcao:     ['dashboard','agenda','comanda','clientes','venda-produto','venda-prof'],
   profissional: ['agenda','comissoes','meu-resumo'],
@@ -2124,20 +2124,14 @@ function salvarProf(){
     DB.profissionais.push({id:DB.nextId.pf++,cor:avCol(DB.profissionais.length),...obj});
   }
   closeModal('m-prof');
-  // Salva imediatamente
   const dados = coletarDados();
   salvarLocal(dados);
   supaSet(dados).then(()=>{
     const st=document.getElementById('sb-save-status');
     if(st) st.textContent='☁ Salvo na nuvem';
   });
-  // Renderiza ambas as telas
   renderProfs();
-  // Força navegação para acessos e renderiza
-  setTimeout(()=>{
-    const btnAcessos = document.querySelector('.nb[onclick*="acessos"]');
-    go('acessos', btnAcessos);
-  }, 100);
+  initLogin();
   initLogin();
 }
 
