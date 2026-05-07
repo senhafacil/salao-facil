@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -290,7 +289,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     <div class="fg" style="margin-top:12px"><label class="fl">Senha</label><input type="password" class="fc" id="login-pass" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')fazerLogin()"></div>
     <button class="btn btn-primary" style="width:100%;margin-top:18px;padding:11px" onclick="fazerLogin()">Entrar</button>
     <div style="text-align:center;margin-top:14px">
-      <button onclick="abrirRecuperacao()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline">Esqueci minha senha</button>
+      <button onclick="document.getElementById('m-recuperar').style.display='flex'" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-decoration:underline">Esqueci minha senha</button>
     </div>
   </div>
 </div>
@@ -1624,9 +1623,9 @@ function abrirRecuperacao(){
 }
 
 function verificarEmergencia(){
-  const digitada = $('rec-emergencia').value;
+  const digitada = $('rec-emergencia').value.trim();
   if(digitada !== SENHA_EMERGENCIA){
-    $('rec-err').textContent='Senha de emergência incorreta.';
+    $('rec-err').textContent='Senha incorreta: ' + digitada + ' ≠ ' + SENHA_EMERGENCIA;
     $('rec-err').style.display='block';
     return;
   }
@@ -1647,9 +1646,9 @@ function salvarNovaSenhaMaster(){
   DB.master.login=login;
   DB.master.senha=s1;
   salvarDados();
-  closeModal('m-recuperar');
+  document.getElementById('m-recuperar').style.display='none';
   initLogin();
-  alert('✅ Senha master redefinida com sucesso! Faça login com a nova senha.');
+  alert('✅ Senha master redefinida! Agora selecione Master e entre com a nova senha.');
 }
 
 function podeVer(secao){
@@ -2817,62 +2816,6 @@ function verPgtos(pid, periodo){
   const p=DB.profissionais.find(x=>x.id===pid);
   const pgtos=(DB.pgto_comissoes||[]).filter(x=>x.pid===pid&&x.periodo===periodo);
   alert(`Pagamentos de ${p?.nome} — ${periodo}:\n\n${pgtos.map(p=>`${fmtDate(p.data)} — ${fmt(p.val)} (${p.forma})${p.obs?' — '+p.obs:''}`).join('\n')}`);
-}
-
-  const rows=[];let totC=0,totR=0,pSum=0,pCnt=0;
-  DB.servicos.forEach(s=>{
-    s.profs.forEach(pid=>{
-      if(isProfissional && pid !== meuId) return;
-      const pct=s.comiss[pid]||0;
-      const rec=s.vendas*s.preco;
-      const comBruta=rec*(pct/100);
-      // Para profissional: estima desconto médio de taxa (usa Crédito como referência se desconta do prof)
-      let comLiq = comBruta;
-      if(isProfissional){
-        // Calcula taxa média ponderada pelos atendimentos reais do histórico
-        const histProf = DB.historico.filter(h=>h.tipo==='Serviço'&&h.desc===s.nome&&DB.profissionais.find(p=>p.id===pid)?.nome===h.prof);
-        let totalTaxa=0;
-        histProf.forEach(h=>{
-          const taxa=getTaxa(h.pgto,h.band);
-          const desc=descProf(h.pgto,h.band);
-          if(desc) totalTaxa += h.val*(taxa/100)*(pct/100);
-        });
-        comLiq = comBruta - totalTaxa;
-      }
-      rows.push({prof:pNome(pid),item:s.nome,qtd:s.vendas,rec,pct,comBruta,comLiq});
-      totC+= isProfissional ? comLiq : comBruta;
-      totR+=rec;pSum+=pct;pCnt++;
-    });
-  });
-
-  if(isProfissional){
-    $('com-metrics').innerHTML=`
-      <div class="metric gold"><div class="metric-label">Minhas comissões</div><div class="metric-val" style="color:var(--gold)">${fmt(totC)}</div><div class="metric-sub">já com desconto de taxa</div></div>
-      <div class="metric info"><div class="metric-label">% médio</div><div class="metric-val">${pCnt?Math.round(pSum/pCnt):0}%</div><div class="metric-sub">minha média</div></div>`;
-  } else {
-    $('com-metrics').innerHTML=`
-      <div class="metric gold"><div class="metric-label">Total a pagar</div><div class="metric-val" style="color:var(--gold)">${fmt(totC)}</div><div class="metric-sub">todas comissões</div></div>
-      <div class="metric"><div class="metric-label">Receita gerada</div><div class="metric-val">${fmt(totR)}</div><div class="metric-sub">pelos serviços</div></div>
-      <div class="metric info"><div class="metric-label">% médio</div><div class="metric-val">${pCnt?Math.round(pSum/pCnt):0}%</div><div class="metric-sub">média equipe</div></div>`;
-  }
-
-  $('tb-comiss').innerHTML=rows.map(r=>`
-    <tr>
-      <td><strong>${r.prof}</strong></td>
-      <td>${r.item}</td>
-      <td>${r.qtd}</td>
-      ${isProfissional?'':`<td>${fmt(r.rec)}</td>`}
-      <td><span class="badge badge-gold">${r.pct}%</span></td>
-      <td style="font-weight:700;color:var(--gold)">${fmt(isProfissional?r.comLiq:r.comBruta)}</td>
-    </tr>`).join('');
-
-  const thead = document.querySelector('#s-comissoes table thead tr');
-  if(thead){
-    thead.innerHTML = isProfissional
-      ? '<th>Profissional</th><th>Serviço</th><th>Qtd</th><th>% Comissão</th><th>Valor a receber</th>'
-      : '<th>Profissional</th><th>Serviço/Produto</th><th>Qtd</th><th>Receita gerada</th><th>% Comissão</th><th>Valor a pagar</th>';
-  }
-  $('com-total').textContent=fmt(totC);
 }
 
 // ══════════ RELATÓRIOS ══════════
