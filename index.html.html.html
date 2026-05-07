@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -648,26 +647,57 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
   <!-- ══ COMISSÕES ══ -->
   <div id="s-comissoes" class="section">
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
-      <div><label class="fl" style="margin-bottom:3px">Mês</label><select class="fc" style="width:160px" id="com-mes" onchange="renderComiss()"><option value="2026-04">Abril 2026</option><option value="2026-03">Março 2026</option></select></div>
-      <div><label class="fl" style="margin-bottom:3px">Profissional</label><select class="fc" style="width:160px" id="com-prof" onchange="renderComiss()"><option value="">Todos</option></select></div>
-      <button class="btn btn-gold" style="align-self:flex-end">↓ Exportar</button>
+      <div><label class="fl" style="margin-bottom:3px">Período</label>
+        <select class="fc" style="width:130px" id="com-periodo" onchange="renderComiss()">
+          <option value="mes">Mês</option>
+          <option value="dia">Dia</option>
+        </select>
+      </div>
+      <div id="com-mes-wrap"><label class="fl" style="margin-bottom:3px">Mês</label>
+        <select class="fc" style="width:160px" id="com-mes" onchange="renderComiss()">
+          <option value="2026-05">Maio 2026</option><option value="2026-04">Abril 2026</option><option value="2026-03">Março 2026</option>
+        </select>
+      </div>
+      <div id="com-dia-wrap" style="display:none"><label class="fl" style="margin-bottom:3px">Data</label>
+        <input type="date" class="fc" style="width:160px" id="com-dia" onchange="renderComiss()">
+      </div>
+      <div><label class="fl" style="margin-bottom:3px">Profissional</label>
+        <select class="fc" style="width:160px" id="com-prof" onchange="renderComiss()"><option value="">Todos</option></select>
+      </div>
     </div>
     <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px" id="com-metrics"></div>
-    <div class="card">
-      <div class="card-header"><span class="card-title">Comissões detalhadas por profissional</span></div>
-      <div class="tw"><table><thead><tr><th>Profissional</th><th>Serviço/Produto</th><th>Qtd</th><th>Receita gerada</th><th>% Comissão</th><th>Valor a pagar</th></tr></thead><tbody id="tb-comiss"></tbody>
-        <tfoot><tr><td colspan="5" style="text-align:right">Total a pagar</td><td id="com-total" style="color:var(--gold);font-weight:700"></td></tr></tfoot>
+
+    <!-- Tabela detalhada (só master vê colunas de tx e bruto) -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header"><span class="card-title">Comissões por profissional</span></div>
+      <div class="tw"><table>
+        <thead><tr id="com-thead"></tr></thead>
+        <tbody id="tb-comiss"></tbody>
+        <tfoot><tr><td colspan="5" style="text-align:right">Total líquido a pagar</td><td id="com-total" style="color:var(--gold);font-weight:700"></td></tr></tfoot>
       </table></div>
+    </div>
+
+    <!-- Pagamento de comissões (só master) -->
+    <div id="com-pgto-section">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">💰 Pagar comissões</span>
+        </div>
+        <div class="card-body">
+          <div id="com-pgto-lista"></div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- ══ RELATÓRIOS ══ -->
   <div id="s-relatorios" class="section">
-    <div class="tabs" style="max-width:600px">
+    <div class="tabs" style="max-width:700px">
       <button class="tab active" onclick="switchRel('svc',this)">Serviços</button>
       <button class="tab" onclick="switchRel('pv',this)">1ª Vez</button>
       <button class="tab" onclick="switchRel('sv',this)">Sem vir</button>
       <button class="tab" onclick="switchRel('origem',this)">Origem</button>
+      <button class="tab" onclick="switchRel('porservico',this)">🔍 Por Serviço</button>
     </div>
     <div id="r-svc">
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -691,6 +721,49 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div class="card"><div class="card-header"><span class="card-title">Clientes por origem</span></div><div class="card-body"><canvas id="chart-origem" style="max-height:260px"></canvas></div></div>
         <div class="card"><div class="card-header"><span class="card-title">Detalhamento</span></div><div class="tw"><table><thead><tr><th>Como conheceu</th><th>Clientes</th><th>%</th></tr></thead><tbody id="tb-origem"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- ══ POR SERVIÇO ══ -->
+    <div id="r-porservico" style="display:none">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔍 Clientes que fizeram um serviço</span></div>
+        <div class="card-body">
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+            <div class="fg" style="margin:0">
+              <label class="fl">Serviço</label>
+              <select class="fc" style="width:220px" id="ps-servico" onchange="renderRelPorServico()">
+                <option value="">Selecione um serviço...</option>
+              </select>
+            </div>
+            <div class="fg" style="margin:0">
+              <label class="fl">Nos últimos</label>
+              <select class="fc" style="width:150px" id="ps-dias" onchange="renderRelPorServico()">
+                <option value="7">7 dias</option>
+                <option value="15">15 dias</option>
+                <option value="30" selected>30 dias</option>
+                <option value="60">60 dias</option>
+                <option value="90">90 dias</option>
+                <option value="180">6 meses</option>
+                <option value="365">1 ano</option>
+                <option value="0">Todos</option>
+              </select>
+            </div>
+            <div class="fg" style="margin:0">
+              <label class="fl">Profissional</label>
+              <select class="fc" style="width:170px" id="ps-prof" onchange="renderRelPorServico()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+          </div>
+          <div id="ps-metrics" class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"></div>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Cliente</th><th>Telefone</th><th>Data do serviço</th><th>Profissional</th><th>Valor</th><th>Dias atrás</th></tr></thead>
+            <tbody id="tb-porservico"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -1066,6 +1139,59 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
   </div>
 </div>
 
+<!-- Modal pagamento de comissão -->
+<div class="mo" id="m-pagar-com">
+  <div class="modal narrow">
+    <div class="mh"><span class="mt" id="m-pagar-title">Pagar Comissão</span><button class="xbtn" onclick="closeModal('m-pagar-com')">×</button></div>
+    <div class="mb">
+      <div id="m-pagar-resumo" style="background:var(--bg);border-radius:var(--radius);padding:14px;margin-bottom:14px"></div>
+      <div class="fg"><label class="fl">Forma de pagamento</label>
+        <select class="fc" id="pagar-forma">
+          <option value="Pix">⚡ Pix</option>
+          <option value="Dinheiro">💵 Dinheiro</option>
+          <option value="Transferência">🏦 Transferência</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Observação <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+        <input type="text" class="fc" id="pagar-obs" placeholder="Ex: Pagamento referente a abril">
+      </div>
+      <input type="hidden" id="pagar-pid">
+      <input type="hidden" id="pagar-val">
+    </div>
+    <div class="mf">
+      <button class="btn btn-outline" onclick="closeModal('m-pagar-com')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarPagamento()">✓ Confirmar pagamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal antecipação -->
+<div class="mo" id="m-antecip">
+  <div class="modal narrow">
+    <div class="mh"><span class="mt" id="m-antecip-title">Registrar Antecipação</span><button class="xbtn" onclick="closeModal('m-antecip')">×</button></div>
+    <div class="mb">
+      <div style="background:var(--warn-l);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--warn);margin-bottom:14px">
+        A antecipação será descontada automaticamente da comissão do profissional no período atual.
+      </div>
+      <div class="fg"><label class="fl">Profissional</label><div id="antecip-prof-nome" style="font-weight:600;padding:8px 0"></div></div>
+      <div class="fg"><label class="fl">Valor antecipado (R$)</label>
+        <input type="number" class="fc" id="antecip-val" placeholder="0,00" step="0.01">
+      </div>
+      <div class="fg"><label class="fl">Data</label>
+        <input type="date" class="fc" id="antecip-data">
+      </div>
+      <div class="fg"><label class="fl">Observação</label>
+        <input type="text" class="fc" id="antecip-obs" placeholder="Ex: Adiantamento quinzenal">
+      </div>
+      <input type="hidden" id="antecip-pid">
+    </div>
+    <div class="mf">
+      <button class="btn btn-outline" onclick="closeModal('m-antecip')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarAntecipacao()">Registrar antecipação</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bloquear horário -->
 <div class="mo" id="m-bloqueio">
   <div class="modal narrow">
@@ -1374,6 +1500,8 @@ const DB = {
   ],
   nextId:{cl:8,pf:6,sv:9,ag:9,cmd:4,est:9,fin:16,vc:3,vf:2,hist:11,bl:1,tar:1,meta:1,compra:1,msg:1},
   gestao:{metas:[],tarefas:[],compras:[],msgs:[],infos:{}},
+  antecipacoes:[],
+  pgto_comissoes:[],
   bloqueios:[],
 };
 
@@ -2022,8 +2150,18 @@ function renderServicos(){
       <td>${s.profs.map(pid=>`<span class="chip" style="margin:2px">${pNome(pid)} <span style="color:var(--gold);font-weight:700">${s.comiss[pid]||0}%</span></span>`).join('')}</td>
       <td><span class="badge badge-blue">${s.vendas}</span></td>
       <td><span class="badge ${s.ativo?'badge-green':'badge-gray'}">${s.ativo?'Ativo':'Inativo'}</span></td>
-      <td><button class="btn btn-ghost btn-xs" onclick="openModalServico(${s.id})">✎</button></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-xs" onclick="openModalServico(${s.id})">✎</button>
+        ${usuarioLogado?.acesso==='master'?`<button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirServico(${s.id})">🗑</button>`:''}
+      </td>
     </tr>`).join('');
+}
+function excluirServico(id){
+  const s=DB.servicos.find(x=>x.id===id);
+  if(!s)return;
+  if(!confirm(`Excluir o serviço "${s.nome}"?\n\nO histórico de atendimentos será mantido.`))return;
+  DB.servicos=DB.servicos.filter(x=>x.id!==id);
+  salvarDados();renderServicos();
 }
 function openModalServico(id=null){
   DB.editId.sv=id;
@@ -2086,7 +2224,7 @@ function renderProfs(){
           <div style="font-size:12px;color:var(--text3)">${p.tel}</div>
           <div style="display:flex;gap:6px">
             ${podeVer('profissionais')?`<button class="btn btn-ghost btn-xs" onclick="openModalProf(${p.id})">✎ Editar</button>`:''}
-            ${podeVer('acessos')?`<button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirProf(${p.id})">🗑</button>`:''}
+            ${usuarioLogado?.acesso==='master'?`<button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirProf(${p.id})">🗑</button>`:''}
           </div>
         </div>
       </div>
@@ -2449,8 +2587,236 @@ function salvarLanc(){
 
 // ══════════ COMISSÕES ══════════
 function renderComiss(){
-  const isProfissional = usuarioLogado && usuarioLogado.acesso === 'profissional';
+  const isProfissional = usuarioLogado?.acesso==='profissional';
+  const isMaster = usuarioLogado?.acesso==='master';
   const meuId = usuarioLogado?.id;
+  const periodo = $('com-periodo')?.value||'mes';
+
+  // Toggle período UI
+  if($('com-mes-wrap')) $('com-mes-wrap').style.display = periodo==='dia'?'none':'block';
+  if($('com-dia-wrap')) $('com-dia-wrap').style.display = periodo==='dia'?'block':'none';
+
+  const mes = $('com-mes')?.value || new Date().toISOString().slice(0,7);
+  const dia = $('com-dia')?.value || new Date().toISOString().slice(0,10);
+  const filtProf = $('com-prof')?.value||'';
+  populateSel('com-prof', DB.profissionais, 'id', 'nome', 'Todos');
+
+  // Calcula comissões por profissional baseado no histórico
+  const resumoPorProf = {};
+  DB.profissionais.forEach(p=>{
+    if(isProfissional && p.id !== meuId) return;
+    if(filtProf && p.id != filtProf) return;
+    resumoPorProf[p.id] = {prof:p, servicos:[], comBruta:0, taxaTotal:0, comLiq:0};
+  });
+
+  DB.historico.forEach(h=>{
+    if(h.tipo!=='Serviço') return;
+    const p = DB.profissionais.find(x=>x.nome===h.prof);
+    if(!p) return;
+    if(isProfissional && p.id!==meuId) return;
+    if(filtProf && p.id!=filtProf) return;
+    // Filtro por período
+    if(periodo==='mes' && !h.data.startsWith(mes)) return;
+    if(periodo==='dia' && h.data!==dia) return;
+
+    const svc = DB.servicos.find(s=>s.nome===h.desc);
+    const pct = svc ? (svc.comiss[p.id]||0) : 0;
+    const comBruta = h.val*(pct/100);
+    const taxaPct = getTaxa(h.pgto, h.band);
+    const descDaProf = descProf(h.pgto, h.band);
+    const valTaxa = descDaProf ? h.val*(taxaPct/100)*(pct/100) : 0;
+    const comLiq = comBruta - valTaxa;
+
+    if(!resumoPorProf[p.id]) resumoPorProf[p.id]={prof:p,servicos:[],comBruta:0,taxaTotal:0,comLiq:0};
+    resumoPorProf[p.id].servicos.push({nome:h.desc, val:h.val, pct, comBruta, valTaxa, comLiq, pgto:h.pgto});
+    resumoPorProf[p.id].comBruta += comBruta;
+    resumoPorProf[p.id].taxaTotal += valTaxa;
+    resumoPorProf[p.id].comLiq += comLiq;
+  });
+
+  const profs = Object.values(resumoPorProf);
+  const totComBruta = profs.reduce((s,r)=>s+r.comBruta,0);
+  const totTaxa = profs.reduce((s,r)=>s+r.taxaTotal,0);
+  const totLiq = profs.reduce((s,r)=>s+r.comLiq,0);
+
+  // Métricas
+  if(isProfissional){
+    $('com-metrics').innerHTML=`
+      <div class="metric gold"><div class="metric-label">Comissão líquida</div><div class="metric-val" style="color:var(--gold)">${fmt(totLiq)}</div><div class="metric-sub">já com desconto de taxa</div></div>
+      <div class="metric info"><div class="metric-label">Atendimentos</div><div class="metric-val">${profs[0]?.servicos.length||0}</div></div>`;
+  } else {
+    $('com-metrics').innerHTML=`
+      <div class="metric"><div class="metric-label">Comissão bruta</div><div class="metric-val">${fmt(totComBruta)}</div></div>
+      <div class="metric danger"><div class="metric-label">Taxa de cartão (prof.)</div><div class="metric-val" style="color:var(--danger)">- ${fmt(totTaxa)}</div></div>
+      <div class="metric gold"><div class="metric-label">Total líquido a pagar</div><div class="metric-val" style="color:var(--gold)">${fmt(totLiq)}</div></div>`;
+  }
+
+  // Cabeçalho da tabela
+  const thead = document.getElementById('com-thead');
+  if(thead){
+    if(isMaster){
+      thead.innerHTML='<th>Profissional</th><th>Serviço</th><th>Comissão bruta</th><th>Taxa cartão (prof.)</th><th>% Com.</th><th>Líquido a pagar</th>';
+    } else if(isProfissional){
+      thead.innerHTML='<th>Serviço</th><th>% Com.</th><th>Valor líquido</th>';
+    } else {
+      thead.innerHTML='<th>Profissional</th><th>Serviço</th><th>% Com.</th><th>Líquido a pagar</th>';
+    }
+  }
+
+  // Linhas da tabela
+  let rows = '';
+  profs.forEach(r=>{
+    r.servicos.forEach(s=>{
+      if(isMaster){
+        rows+=`<tr>
+          <td><strong>${r.prof.nome}</strong></td>
+          <td>${s.nome}</td>
+          <td>${fmt(s.comBruta)}</td>
+          <td style="color:var(--danger)">${s.valTaxa>0?'- '+fmt(s.valTaxa):'—'}</td>
+          <td><span class="badge badge-gold">${s.pct}%</span></td>
+          <td style="font-weight:700;color:var(--gold)">${fmt(s.comLiq)}</td>
+        </tr>`;
+      } else if(isProfissional){
+        rows+=`<tr>
+          <td>${s.nome}</td>
+          <td><span class="badge badge-gold">${s.pct}%</span></td>
+          <td style="font-weight:700;color:var(--gold)">${fmt(s.comLiq)}</td>
+        </tr>`;
+      } else {
+        rows+=`<tr>
+          <td><strong>${r.prof.nome}</strong></td>
+          <td>${s.nome}</td>
+          <td><span class="badge badge-gold">${s.pct}%</span></td>
+          <td style="font-weight:700;color:var(--gold)">${fmt(s.comLiq)}</td>
+        </tr>`;
+      }
+    });
+  });
+  $('tb-comiss').innerHTML = rows || `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Nenhum atendimento no período</td></tr>`;
+  $('com-total').textContent = fmt(totLiq);
+
+  // Seção de pagamento (só master)
+  const pgtoSection = document.getElementById('com-pgto-section');
+  if(pgtoSection) pgtoSection.style.display = isMaster?'block':'none';
+
+  if(isMaster){
+    renderPgtoComissoes(profs, mes, periodo, dia);
+  }
+}
+
+function renderPgtoComissoes(profs, mes, periodo, dia){
+  const chave = periodo==='dia' ? dia : mes;
+  let html = '';
+  profs.forEach(r=>{
+    if(r.servicos.length===0) return;
+    // Antecipações do período
+    const antecips = (DB.antecipacoes||[]).filter(a=>a.pid===r.prof.id && a.data.startsWith(chave));
+    const totalAntecip = antecips.reduce((s,a)=>s+a.val,0);
+    // Pagamentos já feitos
+    const pgtos = (DB.pgto_comissoes||[]).filter(p=>p.pid===r.prof.id && p.periodo===chave);
+    const totalPago = pgtos.reduce((s,p)=>s+p.val,0);
+    const saldo = r.comLiq - totalAntecip - totalPago;
+    const pago = saldo <= 0;
+
+    html += `<div style="border:1.5px solid var(--bg3);border-radius:10px;padding:16px;margin-bottom:14px;${pago?'opacity:.6':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="av" style="width:38px;height:38px;background:${r.prof.cor}22;color:${r.prof.cor}">${initials(r.prof.nome)}</div>
+          <div><div style="font-weight:700">${r.prof.nome}</div><div style="font-size:11px;color:var(--text3)">${r.prof.esp}</div></div>
+        </div>
+        <span class="badge ${pago?'badge-green':'badge-amber'}">${pago?'✓ Pago':'Pendente'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;font-size:12.5px">
+        <div style="background:var(--bg);border-radius:8px;padding:8px 10px">
+          <div style="color:var(--text3);margin-bottom:2px">Comissão líquida</div>
+          <div style="font-weight:700">${fmt(r.comLiq)}</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:8px 10px">
+          <div style="color:var(--text3);margin-bottom:2px">Antecipações</div>
+          <div style="font-weight:700;color:var(--warn)">- ${fmt(totalAntecip)}</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:8px 10px">
+          <div style="color:var(--text3);margin-bottom:2px">Já pago</div>
+          <div style="font-weight:700;color:var(--success)">- ${fmt(totalPago)}</div>
+        </div>
+        <div style="background:${saldo>0?'var(--gold-l)':'var(--success-l)'};border-radius:8px;padding:8px 10px">
+          <div style="color:var(--text3);margin-bottom:2px">Saldo a pagar</div>
+          <div style="font-weight:700;color:${saldo>0?'var(--gold)':'var(--success)'}">${fmt(Math.max(0,saldo))}</div>
+        </div>
+      </div>
+      ${antecips.length>0?`<div style="font-size:11.5px;color:var(--text2);margin-bottom:8px">Antecipações: ${antecips.map(a=>`${fmtDate(a.data)} — ${fmt(a.val)}${a.obs?' ('+a.obs+')':''}`).join(', ')}</div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${saldo>0?`<button class="btn btn-success btn-sm" onclick="openPagarComissao(${r.prof.id},'${r.prof.nome}',${saldo.toFixed(2)},'${chave}')">💰 Dar baixa ${fmt(saldo)}</button>`:''}
+        <button class="btn btn-outline btn-sm" onclick="openAntecipacao(${r.prof.id},'${r.prof.nome}')">+ Antecipação</button>
+        ${pgtos.length>0?`<button class="btn btn-ghost btn-sm" onclick="verPgtos(${r.prof.id},'${chave}')">📋 Ver pagamentos</button>`:''}
+      </div>
+    </div>`;
+  });
+  if(!html) html='<div style="text-align:center;color:var(--text3);padding:24px">Nenhuma comissão no período</div>';
+  $('com-pgto-lista').innerHTML=html;
+}
+
+function openPagarComissao(pid, nome, val, periodo){
+  $('pagar-pid').value=pid;
+  $('pagar-val').value=val;
+  $('m-pagar-title').textContent=`Pagar comissão — ${nome}`;
+  $('m-pagar-resumo').innerHTML=`
+    <div style="font-size:13px"><strong>${nome}</strong></div>
+    <div style="font-size:22px;font-weight:700;color:var(--gold);margin:8px 0">${fmt(val)}</div>
+    <div style="font-size:12px;color:var(--text3)">Período: ${periodo}</div>`;
+  $('pagar-obs').value='';
+  openModal('m-pagar-com');
+}
+
+function confirmarPagamento(){
+  const pid=parseInt($('pagar-pid').value);
+  const val=parseFloat($('pagar-val').value);
+  const forma=$('pagar-forma').value;
+  const obs=$('pagar-obs').value;
+  const p=DB.profissionais.find(x=>x.id===pid);
+  if(!p||!val) return;
+  const periodo=$('com-periodo')?.value==='dia'?$('com-dia')?.value:$('com-mes')?.value;
+  const hoje=new Date().toISOString().slice(0,10);
+  if(!DB.pgto_comissoes) DB.pgto_comissoes=[];
+  DB.pgto_comissoes.push({id:Date.now(),pid,val,forma,obs,periodo,data:hoje});
+  // Lança no financeiro como saída
+  DB.financeiro.push({id:DB.nextId.fin++,data:hoje,desc:`Comissão — ${p.nome}${obs?' ('+obs+')':''}`,cat:'Comissões',tipo:'saida',val});
+  salvarDados();
+  closeModal('m-pagar-com');
+  renderComiss();
+}
+
+function openAntecipacao(pid, nome){
+  $('antecip-pid').value=pid;
+  $('antecip-prof-nome').textContent=nome;
+  $('m-antecip-title').textContent=`Antecipação — ${nome}`;
+  $('antecip-val').value='';
+  $('antecip-data').value=new Date().toISOString().slice(0,10);
+  $('antecip-obs').value='';
+  openModal('m-antecip');
+}
+
+function confirmarAntecipacao(){
+  const pid=parseInt($('antecip-pid').value);
+  const val=parseFloat($('antecip-val').value);
+  const data=$('antecip-data').value;
+  const obs=$('antecip-obs').value;
+  if(!val||val<=0){alert('Informe o valor');return;}
+  const p=DB.profissionais.find(x=>x.id===pid);
+  if(!DB.antecipacoes) DB.antecipacoes=[];
+  DB.antecipacoes.push({id:Date.now(),pid,val,data,obs});
+  // Lança no financeiro como saída
+  DB.financeiro.push({id:DB.nextId.fin++,data,desc:`Antecipação comissão — ${p?.nome||''}${obs?' ('+obs+')':''}`,cat:'Comissões',tipo:'saida',val});
+  salvarDados();
+  closeModal('m-antecip');
+  renderComiss();
+}
+
+function verPgtos(pid, periodo){
+  const p=DB.profissionais.find(x=>x.id===pid);
+  const pgtos=(DB.pgto_comissoes||[]).filter(x=>x.pid===pid&&x.periodo===periodo);
+  alert(`Pagamentos de ${p?.nome} — ${periodo}:\n\n${pgtos.map(p=>`${fmtDate(p.data)} — ${fmt(p.val)} (${p.forma})${p.obs?' — '+p.obs:''}`).join('\n')}`);
+}
 
   const rows=[];let totC=0,totR=0,pSum=0,pCnt=0;
   DB.servicos.forEach(s=>{
@@ -2512,14 +2878,74 @@ function renderComiss(){
 let relAtivo='svc';
 function renderRel(){
   populateSel('rsvc-prof',DB.profissionais,'id','nome','Todos');
+  populateSel('ps-prof',DB.profissionais,'id','nome','Todos');
+  // Popula select de serviços
+  const sel=$('ps-servico');
+  if(sel){
+    sel.innerHTML='<option value="">Selecione um serviço...</option>';
+    DB.servicos.forEach(s=>{ sel.innerHTML+=`<option value="${s.nome}">${s.nome}</option>`; });
+  }
   renderRelSvc();renderRelPV();renderRelSV();renderRelOrigem();
 }
 function switchRel(tipo,el){
   relAtivo=tipo;
   document.querySelectorAll('#s-relatorios .tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['svc','pv','sv','origem'].forEach(id=>{$('r-'+id).style.display=id===tipo?'block':'none';});
-  if(tipo==='origem')setTimeout(renderRelOrigem,50);
+  ['svc','pv','sv','origem','porservico'].forEach(id=>{$('r-'+id).style.display=id===tipo?'block':'none';});
+  if(tipo==='origem') setTimeout(renderRelOrigem,50);
+  if(tipo==='porservico') renderRelPorServico();
+}
+
+function renderRelPorServico(){
+  const svcNome = $('ps-servico')?.value||'';
+  const diasFiltro = parseInt($('ps-dias')?.value||30);
+  const profFiltro = $('ps-prof')?.value||'';
+
+  if(!svcNome){
+    $('tb-porservico').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Selecione um serviço para filtrar</td></tr>';
+    $('ps-metrics').innerHTML='';
+    return;
+  }
+
+  const hoje = new Date();
+  const dataLimite = diasFiltro>0 ? new Date(hoje.getTime()-diasFiltro*864e5).toISOString().slice(0,10) : '2000-01-01';
+
+  // Filtra histórico pelo serviço e período
+  let hist = DB.historico.filter(h=>
+    h.tipo==='Serviço' &&
+    h.desc===svcNome &&
+    h.data>=dataLimite
+  );
+  if(profFiltro) hist=hist.filter(h=>h.prof===pNome(parseInt(profFiltro)));
+
+  // Ordena por data mais recente
+  hist.sort((a,b)=>b.data.localeCompare(a.data));
+
+  // Métricas
+  const total=hist.reduce((s,h)=>s+h.val,0);
+  const clientes=new Set(hist.map(h=>h.cid)).size;
+  $('ps-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Atendimentos</div><div class="metric-val">${hist.length}</div><div class="metric-sub">no período</div></div>
+    <div class="metric"><div class="metric-label">Clientes únicos</div><div class="metric-val">${clientes}</div></div>
+    <div class="metric gold"><div class="metric-label">Receita gerada</div><div class="metric-val" style="color:var(--gold)">${fmt(total)}</div></div>`;
+
+  if(hist.length===0){
+    $('tb-porservico').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Nenhum atendimento encontrado no período</td></tr>';
+    return;
+  }
+
+  $('tb-porservico').innerHTML=hist.map(h=>{
+    const c=DB.clientes.find(x=>x.id===h.cid);
+    const d=Math.floor((hoje-new Date(h.data))/864e5);
+    return `<tr>
+      <td><strong>${cNome(h.cid)}</strong></td>
+      <td style="font-size:12px">${c?.tel||'—'}</td>
+      <td>${fmtDate(h.data)}</td>
+      <td>${h.prof||'—'}</td>
+      <td style="font-weight:600">${fmt(h.val)}</td>
+      <td><span class="badge ${d<=7?'badge-green':d<=30?'badge-blue':'badge-gray'}">${d} dias</span></td>
+    </tr>`;
+  }).join('');
 }
 function renderRelSvc(){
   const sorted=[...DB.servicos].sort((a,b)=>b.vendas-a.vendas);
@@ -2796,6 +3222,7 @@ function coletarDados(){
     agendamentos:DB.agendamentos, comandas:DB.comandas, estoque:DB.estoque,
     financeiro:DB.financeiro, vendas_clientes:DB.vendas_clientes, vendas_profs:DB.vendas_profs,
     historico:DB.historico, bloqueios:DB.bloqueios, config:DB.config, master:DB.master, nextId:DB.nextId, gestao:DB.gestao,
+    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes,
   };
 }
 
@@ -2825,6 +3252,8 @@ async function carregarDados(){
 
   // Garante campos obrigatórios
   if(!DB.bloqueios) DB.bloqueios=[];
+  if(!DB.antecipacoes) DB.antecipacoes=[];
+  if(!DB.pgto_comissoes) DB.pgto_comissoes=[];
   if(!DB.nextId.bl) DB.nextId.bl=1;
   if(!DB.gestao) DB.gestao={metas:[],tarefas:[],compras:[],msgs:[]};
   if(!DB.nextId.tar) DB.nextId.tar=1;
