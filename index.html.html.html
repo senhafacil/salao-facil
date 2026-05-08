@@ -387,6 +387,9 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       <span class="tb-title" id="tb-title">Dashboard</span>
     </div>
     <div class="tb-right">
+      <button id="btn-notif" onclick="verNotificacoes()" style="background:none;border:none;cursor:pointer;position:relative;padding:6px;font-size:18px;display:none">
+        🔔<span id="notif-count" style="position:absolute;top:0;right:0;background:var(--danger);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;display:none"></span>
+      </button>
       <div class="search-wrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input placeholder="Buscar cliente, serviço..." id="gs" oninput="gSearch(this.value)">
@@ -702,6 +705,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       <button class="tab" onclick="switchRel('sv',this)">Sem vir</button>
       <button class="tab" onclick="switchRel('origem',this)">Origem</button>
       <button class="tab" onclick="switchRel('porservico',this)">🔍 Por Serviço</button>
+      <button class="tab" onclick="switchRel('faltas',this)">❌ Faltas</button>
     </div>
     <div id="r-svc">
       <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -770,8 +774,27 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
         </div>
       </div>
     </div>
-  </div>
 
+    <!-- ══ FALTAS ══ -->
+    <div id="r-faltas" style="display:none">
+      <div class="card">
+        <div class="card-header"><span class="card-title">❌ Clientes que faltaram</span>
+          <select class="fc" style="width:160px" id="falta-periodo" onchange="renderRelFaltas()">
+            <option value="30">Últimos 30 dias</option>
+            <option value="60">Últimos 60 dias</option>
+            <option value="90">Últimos 90 dias</option>
+            <option value="0">Todos</option>
+          </select>
+        </div>
+        <div id="faltas-metrics" class="metrics-grid" style="grid-template-columns:repeat(3,1fr);padding:16px"></div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Cliente</th><th>Telefone</th><th>Data da falta</th><th>Serviço</th><th>Profissional</th><th>Total de faltas</th></tr></thead>
+            <tbody id="tb-faltas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ══ MEU RESUMO (profissional) ══ -->
@@ -1523,6 +1546,7 @@ const DB = {
   gestao:{metas:[],tarefas:[],compras:[],msgs:[],infos:{}},
   antecipacoes:[],
   pgto_comissoes:[],
+  notificacoes:[],
   bloqueios:[],
 };
 
@@ -1580,6 +1604,9 @@ function fazerLogin(){
   document.getElementById('app-main').style.display='flex';
   aplicarRestricoes();
   renderSbUser();
+  verificarNotificacoes();
+  // Verifica notificações a cada 30s
+  setInterval(verificarNotificacoes, 30000);
 
   // Navega para primeira tela permitida
   const menu = ACESSO_MENU[user.acesso]||['agenda'];
@@ -1827,7 +1854,26 @@ function renderAgendaGrid(){
           <div class="appt-svc" style="color:var(--danger)">${b.motivo}</div>
         </div>`;
       });
-      ags.forEach(a=>{html+=`<div class="appt"><div class="appt-name">${cNome(a.cid).split(' ')[0]}</div><div class="appt-svc">${sNome(a.sid)}</div></div>`;});
+      ags.forEach(a=>{
+        // Cores por status
+        const cores = {
+          'Pendente':    {bg:'rgba(45,122,86,.12)',  border:'#2d7a56', emoji:'📅'},
+          'Confirmado':  {bg:'rgba(32,96,160,.15)',  border:'#2060a0', emoji:'✅'},
+          'Atendimento': {bg:'rgba(160,120,64,.2)',  border:'#a07840', emoji:'💇'},
+          'Concluído':   {bg:'rgba(100,100,100,.1)', border:'#666',    emoji:'✔'},
+          'Falta':       {bg:'rgba(192,57,43,.12)',  border:'#c0392b', emoji:'❌'},
+        };
+        const cor = cores[a.status]||cores['Pendente'];
+        // Verifica se tem comanda aberta para esse agendamento
+        const cmdAberta = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
+        const status = cmdAberta ? 'Atendimento' : a.status;
+        const corFinal = cores[status]||cor;
+        const clickHandler = !isProfCell ? `onclick="event.stopPropagation();abrirComandaDoAgendamento(${a.id})"` : '';
+        html+=`<div class="appt" style="background:${corFinal.bg};border-left-color:${corFinal.border};cursor:pointer" ${clickHandler}>
+          <div class="appt-name">${corFinal.emoji} ${cNome(a.cid).split(' ')[0]}</div>
+          <div class="appt-svc" style="font-size:10px">${sNome(a.sid)} · ${pNome(a.pid).split(' ')[0]}</div>
+        </div>`;
+      });
       html+='</div>';
     });
   });
@@ -1851,12 +1897,14 @@ function renderAgendaLista(){
       <td>${cNome(a.cid)}</td>
       <td>${sNome(a.sid)}</td>
       <td>${pNome(a.pid)}</td>
-      ${isProfissional?'':`<td style="font-weight:600">${fmt(sPreco(a.sid))}</td>`}
+      ${isProfissional?'<td></td>':`<td style="font-weight:600">${fmt(sPreco(a.sid))}</td>`}
       <td>${sbadge(a.status)}</td>
       <td style="white-space:nowrap">
         ${isProfissional?'<span style="font-size:11px;color:var(--text3)">Somente leitura</span>':`
-          <button class="btn btn-ghost btn-xs" onclick="agStatus(${a.id},'Confirmado')" title="Confirmar">✓</button>
-          <button class="btn btn-ghost btn-xs" onclick="agStatus(${a.id},'Cancelado')" title="Cancelar" style="color:var(--danger)">✕</button>
+          <button class="btn btn-ghost btn-xs" onclick="agStatus(${a.id},'Confirmado')" title="Confirmar">✅</button>
+          <button class="btn btn-ghost btn-xs" onclick="abrirComandaDoAgendamento(${a.id})" title="Abrir comanda">💇</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--warn)" onclick="agStatus(${a.id},'Falta')" title="Falta">❌</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--text3)" onclick="agStatus(${a.id},'Cancelado')" title="Cancelou (avisou)">🚫</button>
         `}
       </td>
     </tr>`).join('');
@@ -1913,9 +1961,51 @@ function abrirComanda(){
   DB.comandas.push({id:DB.nextId.cmd++,cid,aberta:true,itens:[],pgto:null,band:null,abertura:new Date().toLocaleString('pt-BR'),fechamento:null});
   closeModal('m-comanda');renderComanda();updateNbCmd();
 }
+
+function abrirComandaDoAgendamento(agId){
+  const a = DB.agendamentos.find(x=>x.id===agId);
+  if(!a) return;
+  // Verifica se já tem comanda aberta para esse cliente
+  let cmd = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
+  if(!cmd){
+    // Cria nova comanda com serviço já incluído
+    const s = DB.servicos.find(x=>x.id===a.sid);
+    const itens = s ? [{tipo:'svc',refId:a.sid,pid:a.pid,preco:s.preco,nome:s.nome}] : [];
+    cmd = {id:DB.nextId.cmd++,cid:a.cid,aberta:true,itens,pgto:null,band:null,abertura:new Date().toLocaleString('pt-BR'),fechamento:null,agId};
+    DB.comandas.push(cmd);
+    // Atualiza status do agendamento para Em atendimento
+    a.status='Atendimento';
+    salvarDados();
+    // Notifica profissional
+    notificarProfissional(a);
+  }
+  // Navega para comanda e abre
+  go('comanda', document.querySelector('.nb[onclick*="comanda"]'));
+  setTimeout(()=>verComanda(cmd.id), 100);
+  updateNbCmd();
+  renderAgendaGrid();
+}
+
+function notificarProfissional(agendamento){
+  const p = DB.profissionais.find(x=>x.id===agendamento.pid);
+  const c = DB.clientes.find(x=>x.id===agendamento.cid);
+  const s = DB.servicos.find(x=>x.id===agendamento.sid);
+  if(!p||!c||!s) return;
+  // Salva notificação no DB
+  if(!DB.notificacoes) DB.notificacoes=[];
+  DB.notificacoes.push({
+    id: Date.now(),
+    pid: p.id,
+    msg: `📋 Nova comanda aberta!\nCliente: ${c.nome}\nServiço: ${s.nome}\nHora: ${agendamento.hora}`,
+    lida: false,
+    data: new Date().toISOString()
+  });
+  salvarDados();
+}
 function verComanda(id){
   DB.cmdAtiva=id;
   const c=DB.comandas.find(x=>x.id===id);
+  if(!c) return;
   $('cmd-panel').innerHTML=`
     <div class="card" style="height:100%">
       <div class="card-header">
@@ -1925,19 +2015,29 @@ function verComanda(id){
       <div style="padding:16px 22px">
         ${c.itens.map((it,i)=>`
           <div class="ci">
-            <div><div style="font-weight:600">${it.nome}</div><div style="font-size:11px;color:var(--text3)">${it.tipo==='svc'?pNome(it.pid):'Produto'}</div></div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-weight:700">${fmt(it.preco)}</span>
+            <div style="flex:1"><div style="font-weight:600">${it.nome}</div><div style="font-size:11px;color:var(--text3)">${it.tipo==='svc'?pNome(it.pid):'Produto'}</div></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <input type="number" value="${it.preco}" step="0.01" style="width:90px;padding:4px 8px;border:1.5px solid var(--bg3);border-radius:6px;font-size:13px;font-weight:600;text-align:right" onchange="atualizarPrecoItem(${id},${i},this.value)">
               <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="remItem(${id},${i})">✕</button>
             </div>
           </div>`).join('')}
         ${c.itens.length===0?'<div style="color:var(--text3);padding:8px 0">Nenhum item ainda</div>':''}
         <div style="display:flex;justify-content:space-between;font-weight:700;font-size:16px;margin-top:16px;padding-top:12px;border-top:2px solid var(--rose-mid)">
-          <span>Total</span><span style="color:var(--rose)">${fmt(c.itens.reduce((s,i)=>s+i.preco,0))}</span>
+          <span>Total</span><span id="cmd-total-${id}" style="color:var(--rose)">${fmt(c.itens.reduce((s,i)=>s+i.preco,0))}</span>
         </div>
         <button class="btn btn-success" style="width:100%;margin-top:14px" onclick="abrirModalFechar(${id})">✓ Fechar comanda</button>
       </div>
     </div>`;
+}
+
+function atualizarPrecoItem(cmdId, idx, val){
+  const c=DB.comandas.find(x=>x.id===cmdId);
+  if(!c) return;
+  c.itens[idx].preco = parseFloat(val)||0;
+  const total = c.itens.reduce((s,i)=>s+i.preco,0);
+  const el = document.getElementById(`cmd-total-${cmdId}`);
+  if(el) el.textContent = fmt(total);
+  salvarDados();
 }
 function openAddItem(cmdId){
   DB.cmdAtiva=cmdId;
@@ -2844,9 +2944,44 @@ function switchRel(tipo,el){
   relAtivo=tipo;
   document.querySelectorAll('#s-relatorios .tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  ['svc','pv','sv','origem','porservico'].forEach(id=>{$('r-'+id).style.display=id===tipo?'block':'none';});
+  ['svc','pv','sv','origem','porservico','faltas'].forEach(id=>{$('r-'+id).style.display=id===tipo?'block':'none';});
   if(tipo==='origem') setTimeout(renderRelOrigem,50);
   if(tipo==='porservico') renderRelPorServico();
+  if(tipo==='faltas') renderRelFaltas();
+}
+
+function renderRelFaltas(){
+  const dias = parseInt($('falta-periodo')?.value||30);
+  const hoje = new Date();
+  const dataLimite = dias>0 ? new Date(hoje.getTime()-dias*864e5).toISOString().slice(0,10) : '2000-01-01';
+  const faltas = DB.agendamentos.filter(a=>a.status==='Falta'&&a.data>=dataLimite);
+  // Conta faltas por cliente
+  const porCliente={};
+  faltas.forEach(a=>{
+    if(!porCliente[a.cid]) porCliente[a.cid]=0;
+    porCliente[a.cid]++;
+  });
+  const total=faltas.length;
+  const clientes=Object.keys(porCliente).length;
+  const reincidentes=Object.values(porCliente).filter(v=>v>1).length;
+  $('faltas-metrics').innerHTML=`
+    <div class="metric danger"><div class="metric-label">Total de faltas</div><div class="metric-val" style="color:var(--danger)">${total}</div></div>
+    <div class="metric"><div class="metric-label">Clientes que faltaram</div><div class="metric-val">${clientes}</div></div>
+    <div class="metric warn"><div class="metric-label">Reincidentes</div><div class="metric-val">${reincidentes}</div><div class="metric-sub">mais de 1 falta</div></div>`;
+  $('tb-faltas').innerHTML = faltas.length===0
+    ? '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Nenhuma falta no período</td></tr>'
+    : faltas.sort((a,b)=>b.data.localeCompare(a.data)).map(a=>{
+        const c=DB.clientes.find(x=>x.id===a.cid);
+        const totalFaltas=porCliente[a.cid]||1;
+        return `<tr>
+          <td><strong>${cNome(a.cid)}</strong></td>
+          <td style="font-size:12px">${c?.tel||'—'}</td>
+          <td>${fmtDate(a.data)} ${a.hora}</td>
+          <td>${sNome(a.sid)}</td>
+          <td>${pNome(a.pid)}</td>
+          <td><span class="badge ${totalFaltas>1?'badge-red':'badge-amber'}">${totalFaltas} falta${totalFaltas>1?'s':''}</span></td>
+        </tr>`;
+      }).join('');
 }
 
 function renderRelPorServico(){
@@ -3175,7 +3310,7 @@ function coletarDados(){
     agendamentos:DB.agendamentos, comandas:DB.comandas, estoque:DB.estoque,
     financeiro:DB.financeiro, vendas_clientes:DB.vendas_clientes, vendas_profs:DB.vendas_profs,
     historico:DB.historico, bloqueios:DB.bloqueios, config:DB.config, master:DB.master, nextId:DB.nextId, gestao:DB.gestao,
-    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes,
+    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes, notificacoes:DB.notificacoes||[],
   };
 }
 
@@ -3843,6 +3978,31 @@ function salvarInfoMes(){
   renderGGInfos();
   const st=document.getElementById('sb-save-status');
   if(st){st.textContent='✓ Informações salvas!';setTimeout(()=>{st.textContent='☁ Sincronizado';},2000);}
+}
+
+// ══════════ NOTIFICAÇÕES ══════════
+function verificarNotificacoes(){
+  if(!usuarioLogado||usuarioLogado.acesso!=='profissional') return;
+  const notifs=(DB.notificacoes||[]).filter(n=>n.pid===usuarioLogado.id&&!n.lida);
+  const btn=document.getElementById('btn-notif');
+  const cnt=document.getElementById('notif-count');
+  if(btn){
+    btn.style.display=notifs.length>0?'block':'none';
+    if(cnt){
+      cnt.textContent=notifs.length;
+      cnt.style.display=notifs.length>0?'flex':'none';
+    }
+  }
+}
+
+function verNotificacoes(){
+  const notifs=(DB.notificacoes||[]).filter(n=>n.pid===usuarioLogado?.id&&!n.lida);
+  if(notifs.length===0){alert('Sem novas notificações');return;}
+  alert('📋 Suas notificações:\n\n'+notifs.map(n=>n.msg).join('\n\n'));
+  // Marca como lidas
+  notifs.forEach(n=>n.lida=true);
+  salvarDados();
+  verificarNotificacoes();
 }
 
 // ══════════ MINHA SENHA (profissional) ══════════
