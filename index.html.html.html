@@ -2677,7 +2677,8 @@ function renderEstoque(){
       <td>${e.custo?fmt(e.custo):'—'}</td>
       <td><div class="el"><div class="ef" style="width:${pct}%;background:${cor}"></div></div></td>
       <td>${st}</td>
-      <td><button class="btn btn-ghost btn-xs" onclick="ajustarQtd(${e.id})">✎</button></td>
+      <td><button class="btn btn-ghost btn-xs" onclick="ajustarQtd(${e.id})">✎</button>
+          ${usuarioLogado?.acesso==='master'?`<button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirEstoque(${e.id})">🗑</button>`:''}</td>
     </tr>`;
   }).join('');
 }
@@ -2685,6 +2686,13 @@ function filtEst(t,el){
   filtEstAtual=t;
   document.querySelectorAll('#s-estoque .tab').forEach(x=>x.classList.remove('active'));
   el.classList.add('active');renderEstoque();
+}
+function excluirEstoque(id){
+  const e=DB.estoque.find(x=>x.id===id);
+  if(!e) return;
+  if(!confirm(`Excluir "${e.nome}" do estoque?`)) return;
+  DB.estoque=DB.estoque.filter(x=>x.id!==id);
+  salvarDados();renderEstoque();
 }
 function limpaEstoqueForm(){['est-nome','est-qtd','est-min','est-custo','est-pvenda'].forEach(id=>{const el=$(id);if(el)el.value=id.includes('qtd')?0:id.includes('min')?2:'';});}
 function salvarEstoque(){
@@ -4217,12 +4225,9 @@ function preencherDadosAnalise(){
   if(!sid) return;
   const s=DB.servicos.find(x=>x.id===sid);
   if(!s) return;
-  // Preenche preço atual do serviço
   $('anal-preco').value=s.preco;
-  // Busca custos cadastrados
   const custos=(DB.custosProd||[]).filter(c=>c.svcId===sid);
   if(custos.length>0) _produtosAnalise=custos.map(c=>({produto:c.produto,qtd:c.qtd,custo:c.custo}));
-  // Comissão média
   const comissoes=Object.values(s.comiss||{});
   if(comissoes.length>0) $('anal-comissao').value=Math.round(comissoes.reduce((a,b)=>a+b,0)/comissoes.length);
   renderProdutosAnalise();
@@ -4619,7 +4624,7 @@ function salvarMinhaSenha(){
 
 // ══════════ ZERAR DADOS ══════════
 function resetarDados(){
-  if(!confirm('⚠ ATENÇÃO!\n\nIsso vai apagar TODOS os dados do sistema:\n• Clientes\n• Agendamentos\n• Comandas\n• Histórico\n• Financeiro\n• Estoque\n\nOs cadastros de profissionais e serviços serão mantidos.\n\nTem certeza?')) return;
+  if(!confirm('⚠ ATENÇÃO!\n\nIsso vai apagar os dados de movimento:\n• Clientes\n• Agendamentos\n• Comandas\n• Histórico\n• Financeiro\n• Vendas\n• Bloqueios\n\nSerão MANTIDOS:\n• Profissionais\n• Serviços\n• Estoque (cadastros)\n• Gestão Gerência\n\nTem certeza?')) return;
   if(!confirm('Confirmação final: apagar todos os dados de movimento?')) return;
   DB.clientes=[];
   DB.agendamentos=[];
@@ -4631,13 +4636,11 @@ function resetarDados(){
   DB.bloqueios=[];
   DB.antecipacoes=[];
   DB.pgto_comissoes=[];
+  DB.notificacoes=[];
   DB.nextId={cl:1,pf:DB.nextId.pf,sv:DB.nextId.sv,ag:1,cmd:1,est:DB.nextId.est,fin:1,vc:1,vf:1,hist:1,bl:1,tar:DB.nextId.tar,meta:DB.nextId.meta,compra:DB.nextId.compra,msg:DB.nextId.msg};
-  // Zera vendas dos serviços
   DB.servicos.forEach(s=>{s.vendas=0;});
-  // Zera estoque para quantidade inicial
-  DB.estoque.forEach(e=>{e.qtd=0;});
   salvarDados();
-  alert('✅ Dados zerados! Profissionais e serviços foram mantidos.');
+  alert('✅ Dados de movimento zerados!\nProfissionais, serviços, estoque e Gestão Gerência foram mantidos.');
   location.reload();
 }
 
