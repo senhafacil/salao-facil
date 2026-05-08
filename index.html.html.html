@@ -185,15 +185,14 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 .ag-hour{padding:6px 8px;font-size:11px;color:var(--text3);text-align:right;border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg3);background:var(--bg)}
 .ag-cell{border-right:1px solid var(--bg2);border-bottom:1px solid var(--bg2);min-height:42px;padding:3px;cursor:pointer}
 .ag-cell:hover{background:rgba(181,96,110,.05)}
-.appt{border-left:4px solid var(--rose);border-radius:5px;padding:4px 7px;font-size:11px;margin-bottom:2px;cursor:pointer}
+.appt{border-radius:5px;padding:4px 7px;font-size:11px;margin-bottom:2px;cursor:pointer;border-left:4px solid transparent}
 .appt-name{font-weight:700;font-size:11.5px}
 .appt-svc{font-size:10px;opacity:.85}
-/* Status colors — mais vibrantes */
-.appt-pendente   {background:#c8ecd8;border-left-color:#1a7a40;color:#0d4a25}
-.appt-confirmado {background:#bcd8f5;border-left-color:#1450a0;color:#0a2d60}
-.appt-atendimento{background:#fde8b0;border-left-color:#a06000;color:#6b3f00}
-.appt-concluido  {background:#e0e0e0;border-left-color:#666;color:#333}
-.appt-falta      {background:#f5bcb5;border-left-color:#c0392b;color:#7a0f00}
+.appt-pendente   {background:#c8ecd8!important;border-left-color:#1a7a40!important;color:#0d4a25!important}
+.appt-confirmado {background:#bcd8f5!important;border-left-color:#1450a0!important;color:#0a2d60!important}
+.appt-atendimento{background:#fde8b0!important;border-left-color:#a06000!important;color:#6b3f00!important}
+.appt-concluido  {background:#e0e0e0!important;border-left-color:#666!important;color:#333!important}
+.appt-falta      {background:#f5bcb5!important;border-left-color:#c0392b!important;color:#7a0f00!important}
 
 /* ── ESTOQUE LEVEL ── */
 .el{width:70px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
@@ -2278,8 +2277,15 @@ function fecharComanda(){
   if(c.agId){
     const ag=DB.agendamentos.find(x=>x.id===c.agId);
     if(ag) ag.status='Concluído';
+  } else {
+    // Tenta achar agendamento do cliente com status Em atendimento ou Confirmado no dia de hoje
+    const hoje2=new Date().toISOString().slice(0,10);
+    const ag=DB.agendamentos.find(x=>x.cid===c.cid&&x.data===hoje2&&(x.status==='Atendimento'||x.status==='Confirmado'||x.status==='Pendente'));
+    if(ag) ag.status='Concluído';
   }
-  closeModal('m-fechar');renderComanda();updateNbCmd();salvarDados();renderAgendaGrid();
+  closeModal('m-fechar');renderComanda();updateNbCmd();salvarDados();
+  // Atualiza agenda se estiver visível
+  if(document.getElementById('s-agenda')?.classList.contains('active')) renderAgendaGrid();
 }
 
 // ══════════ PAY HELPERS ══════════
