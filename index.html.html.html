@@ -185,15 +185,15 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 .ag-hour{padding:6px 8px;font-size:11px;color:var(--text3);text-align:right;border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg3);background:var(--bg)}
 .ag-cell{border-right:1px solid var(--bg2);border-bottom:1px solid var(--bg2);min-height:42px;padding:3px;cursor:pointer}
 .ag-cell:hover{background:rgba(181,96,110,.05)}
-.appt{border-left:3px solid var(--rose);border-radius:5px;padding:4px 7px;font-size:11px;margin-bottom:2px;cursor:pointer}
+.appt{border-left:4px solid var(--rose);border-radius:5px;padding:4px 7px;font-size:11px;margin-bottom:2px;cursor:pointer}
 .appt-name{font-weight:700;font-size:11.5px}
 .appt-svc{font-size:10px;opacity:.85}
-/* Status colors */
-.appt-pendente  {background:#e8f5ee;border-left-color:#2d7a56}
-.appt-confirmado{background:#e3eef8;border-left-color:#2060a0}
-.appt-atendimento{background:#fdf3e3;border-left-color:#a07840}
-.appt-concluido {background:#f0f0f0;border-left-color:#888}
-.appt-falta     {background:#fdecea;border-left-color:#c0392b}
+/* Status colors — mais vibrantes */
+.appt-pendente   {background:#c8ecd8;border-left-color:#1a7a40;color:#0d4a25}
+.appt-confirmado {background:#bcd8f5;border-left-color:#1450a0;color:#0a2d60}
+.appt-atendimento{background:#fde8b0;border-left-color:#a06000;color:#6b3f00}
+.appt-concluido  {background:#e0e0e0;border-left-color:#666;color:#333}
+.appt-falta      {background:#f5bcb5;border-left-color:#c0392b;color:#7a0f00}
 
 /* ── ESTOQUE LEVEL ── */
 .el{width:70px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
@@ -452,11 +452,11 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     <div class="card" style="margin-bottom:20px">
       <div id="ag-grid-wrap" style="overflow-x:auto"><div class="ag-grid" id="ag-grid"></div></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 0;font-size:11px;color:var(--text2)">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8f5ee;border-left:3px solid #2d7a56;margin-right:3px"></span>📅 Agendado</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e3eef8;border-left:3px solid #2060a0;margin-right:3px"></span>✅ Confirmado</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdf3e3;border-left:3px solid #a07840;margin-right:3px"></span>💇 Em atendimento</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0f0f0;border-left:3px solid #888;margin-right:3px"></span>✔ Concluído</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdecea;border-left:3px solid #c0392b;margin-right:3px"></span>❌ Falta</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#c8ecd8;border-left:4px solid #1a7a40;margin-right:3px"></span>📅 Agendado</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#bcd8f5;border-left:4px solid #1450a0;margin-right:3px"></span>✅ Confirmado</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#fde8b0;border-left:4px solid #a06000;margin-right:3px"></span>💇 Em atendimento</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#e0e0e0;border-left:4px solid #666;margin-right:3px"></span>✔ Concluído</span>
+        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f5bcb5;border-left:4px solid #c0392b;margin-right:3px"></span>❌ Falta</span>
       </div>
     </div>
     <div class="card">
@@ -945,9 +945,18 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
               </select>
             </div>
             <div class="dv"></div>
-            <div class="fg"><label class="fl">💰 Custo de produto (R$)</label>
-              <input type="number" class="fc" id="prec-custo-prod" value="0" step="0.01" oninput="calcularPreco()">
+            <div class="fg">
+              <label class="fl" style="margin-bottom:6px">🧴 Produtos/Insumos utilizados</label>
+              <div style="display:flex;gap:8px;font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600">
+                <span style="flex:2">Produto</span><span style="width:70px">Qtd</span><span style="width:90px">R$ unit.</span><span style="min-width:60px">Total</span>
+              </div>
+              <div id="prec-produtos-wrap"></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                <button class="btn btn-outline btn-xs" onclick="adicionarProdutoCalc()">+ Adicionar produto</button>
+                <span style="font-size:13px;font-weight:700">Total: <span id="prec-total-prod" style="color:var(--rose)">R$ 0,00</span></span>
+              </div>
             </div>
+            <div class="dv"></div>
             <div class="fg"><label class="fl">💳 Taxa de cartão (%)</label>
               <input type="number" class="fc" id="prec-taxa-cartao" value="2.8" step="0.1" oninput="calcularPreco()">
             </div>
@@ -959,9 +968,6 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
             </div>
             <div class="fg"><label class="fl">🏢 Custo fixo (%)</label>
               <input type="number" class="fc" id="prec-fixo" value="15" step="1" oninput="calcularPreco()" placeholder="Ex: aluguel, água, luz">
-            </div>
-            <div class="fg"><label class="fl">📦 Custo variável (%)</label>
-              <input type="number" class="fc" id="prec-variavel" value="5" step="1" oninput="calcularPreco()" placeholder="Ex: materiais extras">
             </div>
             <div class="fg"><label class="fl">🎯 Lucro desejado (%)</label>
               <input type="number" class="fc" id="prec-lucro" value="20" step="1" oninput="calcularPreco()">
@@ -4120,13 +4126,41 @@ function switchPrec(aba, el){
 }
 
 function renderPrecificacao(){
-  // Popula select de serviços
   const sel=$('prec-servico');
   if(sel){
     sel.innerHTML='<option value="">-- Selecione para preencher --</option>';
     DB.servicos.forEach(s=>{ sel.innerHTML+=`<option value="${s.id}">${s.nome} — ${fmt(s.preco)}</option>`; });
   }
+  renderProdutosCalc();
   calcularPreco();
+}
+
+// Produtos da calculadora (múltiplos)
+let _produtosCalc = [{produto:'', qtd:1, custo:0}];
+
+function renderProdutosCalc(){
+  const wrap = document.getElementById('prec-produtos-wrap');
+  if(!wrap) return;
+  wrap.innerHTML = _produtosCalc.map((p,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input type="text" class="fc" placeholder="Nome do produto" value="${p.produto}"
+        style="flex:2" oninput="_produtosCalc[${i}].produto=this.value;calcularPreco()">
+      <input type="number" class="fc" placeholder="Qtd" value="${p.qtd}" step="0.01"
+        style="width:70px" oninput="_produtosCalc[${i}].qtd=parseFloat(this.value)||0;calcularPreco()">
+      <input type="number" class="fc" placeholder="R$ unit." value="${p.custo||''}" step="0.01"
+        style="width:90px" oninput="_produtosCalc[${i}].custo=parseFloat(this.value)||0;calcularPreco()">
+      <span style="font-size:12px;color:var(--text2);white-space:nowrap;min-width:60px">${fmt(p.qtd*p.custo)}</span>
+      ${_produtosCalc.length>1?`<button onclick="_produtosCalc.splice(${i},1);renderProdutosCalc();calcularPreco()" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px">✕</button>`:'<span style="width:20px"></span>'}
+    </div>`).join('');
+  // Total produtos
+  const total=_produtosCalc.reduce((s,p)=>s+p.qtd*p.custo,0);
+  document.getElementById('prec-total-prod').textContent=fmt(total);
+  calcularPreco();
+}
+
+function adicionarProdutoCalc(){
+  _produtosCalc.push({produto:'',qtd:1,custo:0});
+  renderProdutosCalc();
 }
 
 function preencherDadosServico(){
@@ -4134,58 +4168,60 @@ function preencherDadosServico(){
   if(!sid) return;
   const s=DB.servicos.find(x=>x.id===sid);
   if(!s) return;
-  // Busca custo de produto cadastrado para esse serviço
+  // Busca custos cadastrados
   const custos=(DB.custosProd||[]).filter(c=>c.svcId===sid);
-  const totalCusto=custos.reduce((sum,c)=>sum+c.qtd*c.custo,0);
-  if(totalCusto>0) $('prec-custo-prod').value=totalCusto.toFixed(2);
-  // Busca comissão média do serviço
+  if(custos.length>0){
+    _produtosCalc = custos.map(c=>({produto:c.produto, qtd:c.qtd, custo:c.custo}));
+  }
+  // Comissão média
   const comissoes=Object.values(s.comiss||{});
   if(comissoes.length>0){
     const media=comissoes.reduce((a,b)=>a+b,0)/comissoes.length;
     $('prec-comissao').value=Math.round(media);
   }
+  renderProdutosCalc();
   calcularPreco();
 }
 
 function calcularPreco(){
-  const custoProd  = parseFloat($('prec-custo-prod')?.value)||0;
+  // Custo de produto = soma dos produtos (valor fixo em R$)
+  const custoProd  = _produtosCalc.reduce((s,p)=>s+p.qtd*p.custo,0);
   const txCartao   = parseFloat($('prec-taxa-cartao')?.value)||0;
   const imposto    = parseFloat($('prec-imposto')?.value)||0;
   const comissao   = parseFloat($('prec-comissao')?.value)||0;
   const fixo       = parseFloat($('prec-fixo')?.value)||0;
-  const variavel   = parseFloat($('prec-variavel')?.value)||0;
   const lucro      = parseFloat($('prec-lucro')?.value)||0;
 
-  // Total de % sobre o preço
-  const totalPct = txCartao + imposto + comissao + fixo + variavel + lucro;
+  // As % incidem sobre o preço final (exceto custo produto que é fixo em R$)
+  const totalPct = txCartao + imposto + comissao + fixo + lucro;
 
-  // Preço mínimo = custo / (1 - totalPct/100)
-  const precoMin = totalPct < 100 ? custoProd / (1 - totalPct/100) : 0;
+  if(totalPct>=100){
+    const res=document.getElementById('prec-resultado');
+    if(res) res.innerHTML='<div style="color:var(--danger);text-align:center;padding:16px">⚠ A soma das % ultrapassa 100%. Revise os valores.</div>';
+    return;
+  }
 
-  // Breakdown
+  // Preço = (custoProduto) / (1 - totalPct/100)
+  const precoMin = custoProd / (1 - totalPct/100);
+
   const valCartao  = precoMin * txCartao/100;
   const valImposto = precoMin * imposto/100;
   const valComissao= precoMin * comissao/100;
   const valFixo    = precoMin * fixo/100;
-  const valVariavel= precoMin * variavel/100;
   const valLucro   = precoMin * lucro/100;
 
   const res = document.getElementById('prec-resultado');
   if(!res) return;
 
-  if(totalPct>=100){
-    res.innerHTML='<div style="color:var(--danger);text-align:center;padding:16px">⚠ A soma das % ultrapassa 100%. Revise os valores.</div>';
-    return;
-  }
-
   res.innerHTML=`
     <div style="text-align:center;margin-bottom:20px">
       <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Preço mínimo sugerido</div>
       <div style="font-size:36px;font-weight:800;color:var(--rose)">${fmt(precoMin)}</div>
+      <div style="font-size:11px;color:var(--text3)">Para cobrir todos os custos e ter ${lucro}% de lucro</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
-        <span>🧴 Custo de produto</span><span style="font-weight:600">${fmt(custoProd)}</span>
+        <span>🧴 Custo de produto (fixo)</span><span style="font-weight:600">${fmt(custoProd)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
         <span>💳 Taxa de cartão (${txCartao}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valCartao)}</span>
@@ -4199,15 +4235,11 @@ function calcularPreco(){
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
         <span>🏢 Custo fixo (${fixo}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valFixo)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
-        <span>📦 Custo variável (${variavel}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valVariavel)}</span>
-      </div>
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:rgba(45,122,86,.1);border-radius:8px;border:1px solid var(--success)">
         <span>🎯 Lucro (${lucro}%)</span><span style="font-weight:700;color:var(--success)">+ ${fmt(valLucro)}</span>
       </div>
     </div>`;
 
-  // Simulação
   const sim = document.getElementById('prec-simulacao');
   if(sim){
     const qtds=[5,10,20,30];
