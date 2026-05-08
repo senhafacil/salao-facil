@@ -184,10 +184,16 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 .ag-hdr{background:var(--bg);padding:9px 8px;text-align:center;font-size:11px;font-weight:700;color:var(--text2);border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg3)}
 .ag-hour{padding:6px 8px;font-size:11px;color:var(--text3);text-align:right;border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg3);background:var(--bg)}
 .ag-cell{border-right:1px solid var(--bg2);border-bottom:1px solid var(--bg2);min-height:42px;padding:3px;cursor:pointer}
-.ag-cell:hover{background:var(--rose-light)}
-.appt{background:var(--rose-light);border-left:3px solid var(--rose);border-radius:5px;padding:3px 6px;font-size:11px;margin-bottom:2px}
-.appt-name{font-weight:700;color:var(--rose-dark)}
-.appt-svc{font-size:10px;color:var(--rose)}
+.ag-cell:hover{background:rgba(181,96,110,.05)}
+.appt{border-left:3px solid var(--rose);border-radius:5px;padding:4px 7px;font-size:11px;margin-bottom:2px;cursor:pointer}
+.appt-name{font-weight:700;font-size:11.5px}
+.appt-svc{font-size:10px;opacity:.85}
+/* Status colors */
+.appt-pendente  {background:#e8f5ee;border-left-color:#2d7a56}
+.appt-confirmado{background:#e3eef8;border-left-color:#2060a0}
+.appt-atendimento{background:#fdf3e3;border-left-color:#a07840}
+.appt-concluido {background:#f0f0f0;border-left-color:#888}
+.appt-falta     {background:#fdecea;border-left-color:#c0392b}
 
 /* ── ESTOQUE LEVEL ── */
 .el{width:70px;height:5px;background:var(--bg2);border-radius:3px;overflow:hidden}
@@ -359,6 +365,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       <button class="nb" onclick="go('meu-resumo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Meu Resumo</button>
       <button class="nb" onclick="openModalMinhaSenha()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Minha Senha</button>
       <button class="nb" onclick="go('gestao-gerencia',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Gestão Gerência</button>
+      <button class="nb" onclick="go('precificacao',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Precificação</button>
       <button class="nb" onclick="go('configuracoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurações</button>
     </div>
   </div>
@@ -444,6 +451,13 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     </div>
     <div class="card" style="margin-bottom:20px">
       <div id="ag-grid-wrap" style="overflow-x:auto"><div class="ag-grid" id="ag-grid"></div></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 0;font-size:11px;color:var(--text2)">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e8f5ee;border-left:3px solid #2d7a56;margin-right:3px"></span>📅 Agendado</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e3eef8;border-left:3px solid #2060a0;margin-right:3px"></span>✅ Confirmado</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdf3e3;border-left:3px solid #a07840;margin-right:3px"></span>💇 Em atendimento</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f0f0f0;border-left:3px solid #888;margin-right:3px"></span>✔ Concluído</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fdecea;border-left:3px solid #c0392b;margin-right:3px"></span>❌ Falta</span>
+      </div>
     </div>
     <div class="card">
       <div class="card-header"><span class="card-title">Lista de agendamentos</span>
@@ -907,6 +921,92 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     </div>
   </div>
 
+  <!-- ══ PRECIFICAÇÃO ══ -->
+  <div id="s-precificacao" class="section">
+    <div style="margin-bottom:20px">
+      <h2 style="font-size:18px;margin-bottom:4px">Precificação</h2>
+      <div style="font-size:12.5px;color:var(--text3)">Calcule o preço ideal de cada serviço e gerencie custos de produto</div>
+    </div>
+    <div class="tabs" style="margin-bottom:20px">
+      <button class="tab active" onclick="switchPrec('calc',this)">🧮 Calculadora de Preço</button>
+      <button class="tab" onclick="switchPrec('custos',this)">🧴 Custo de Produto por Serviço</button>
+    </div>
+
+    <!-- CALCULADORA -->
+    <div id="prec-calc">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <!-- Entradas -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">📥 Parâmetros do serviço</span></div>
+          <div class="card-body">
+            <div class="fg"><label class="fl">Serviço (opcional)</label>
+              <select class="fc" id="prec-servico" onchange="preencherDadosServico()">
+                <option value="">-- Selecione para preencher --</option>
+              </select>
+            </div>
+            <div class="dv"></div>
+            <div class="fg"><label class="fl">💰 Custo de produto (R$)</label>
+              <input type="number" class="fc" id="prec-custo-prod" value="0" step="0.01" oninput="calcularPreco()">
+            </div>
+            <div class="fg"><label class="fl">💳 Taxa de cartão (%)</label>
+              <input type="number" class="fc" id="prec-taxa-cartao" value="2.8" step="0.1" oninput="calcularPreco()">
+            </div>
+            <div class="fg"><label class="fl">📋 Imposto (%)</label>
+              <input type="number" class="fc" id="prec-imposto" value="0" step="0.1" oninput="calcularPreco()">
+            </div>
+            <div class="fg"><label class="fl">👩 Comissão profissional (%)</label>
+              <input type="number" class="fc" id="prec-comissao" value="40" step="1" oninput="calcularPreco()">
+            </div>
+            <div class="fg"><label class="fl">🏢 Custo fixo (%)</label>
+              <input type="number" class="fc" id="prec-fixo" value="15" step="1" oninput="calcularPreco()" placeholder="Ex: aluguel, água, luz">
+            </div>
+            <div class="fg"><label class="fl">📦 Custo variável (%)</label>
+              <input type="number" class="fc" id="prec-variavel" value="5" step="1" oninput="calcularPreco()" placeholder="Ex: materiais extras">
+            </div>
+            <div class="fg"><label class="fl">🎯 Lucro desejado (%)</label>
+              <input type="number" class="fc" id="prec-lucro" value="20" step="1" oninput="calcularPreco()">
+            </div>
+          </div>
+        </div>
+
+        <!-- Resultado -->
+        <div>
+          <div class="card" style="margin-bottom:16px">
+            <div class="card-header"><span class="card-title">📊 Resultado</span></div>
+            <div class="card-body" id="prec-resultado">
+              <div style="text-align:center;color:var(--text3);padding:20px">Preencha os dados ao lado</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📈 Simulação de receita</span></div>
+            <div class="card-body" id="prec-simulacao">
+              <div style="text-align:center;color:var(--text3);padding:20px">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CUSTO DE PRODUTO POR SERVIÇO -->
+    <div id="prec-custos" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <span class="card-title">🧴 Custo de produto por serviço</span>
+          <button class="btn btn-primary btn-sm" onclick="openModalCustoProd()">+ Registrar custo</button>
+        </div>
+        <div style="background:var(--info-l);padding:10px 18px;font-size:12px;color:var(--info)">
+          💡 Registre quanto gasta de cada produto em cada serviço. Isso alimenta automaticamente a calculadora de precificação.
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>Serviço</th><th>Produto</th><th>Qtd usada</th><th>Custo unitário</th><th>Custo total</th><th></th></tr></thead>
+            <tbody id="tb-custo-prod"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ CONFIGURAÇÕES ══ -->
   <div id="s-configuracoes" class="section">
     <div style="margin-bottom:20px">
@@ -1322,6 +1422,32 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
   </div>
 </div>
 
+<!-- Modal custo de produto -->
+<div class="mo" id="m-custo-prod">
+  <div class="modal narrow">
+    <div class="mh"><span class="mt" id="m-cp-title">Registrar Custo de Produto</span><button class="xbtn" onclick="closeModal('m-custo-prod')">×</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Serviço *</label><select class="fc" id="cp-servico"></select></div>
+      <div class="fg"><label class="fl">Produto/Insumo *</label><input type="text" class="fc" id="cp-produto" placeholder="Ex: Tinta Loreal 60g"></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Quantidade usada</label><input type="number" class="fc" id="cp-qtd" step="0.01" value="1" placeholder="Ex: 0.5"></div>
+        <div class="fg"><label class="fl">Unidade</label>
+          <select class="fc" id="cp-unidade">
+            <option>g</option><option>ml</option><option>unidade</option><option>ampola</option><option>sachê</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Custo unitário (R$)</label><input type="number" class="fc" id="cp-custo" step="0.01" placeholder="Ex: 8.50"></div>
+      <div class="fg"><label class="fl">Observação</label><input type="text" class="fc" id="cp-obs" placeholder="Opcional"></div>
+      <input type="hidden" id="cp-id">
+    </div>
+    <div class="mf">
+      <button class="btn btn-outline" onclick="closeModal('m-custo-prod')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCustoProd()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal minha senha (profissional) -->
 <div class="mo" id="m-minha-senha">
   <div class="modal narrow">
@@ -1547,6 +1673,7 @@ const DB = {
   antecipacoes:[],
   pgto_comissoes:[],
   notificacoes:[],
+  custosProd:[],
   bloqueios:[],
 };
 
@@ -1562,8 +1689,8 @@ const ACESSO_LABELS = {
 
 // O que cada nível pode ver (ids das seções do menu)
 const ACESSO_MENU = {
-  master:       ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','financeiro','comissoes','relatorios','configuracoes','gestao-gerencia'],
-  gerencia:     ['dashboard','agenda','comanda','clientes','servicos','estoque','venda-produto','venda-prof','relatorios','gestao-gerencia'],
+  master:       ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','financeiro','comissoes','relatorios','configuracoes','gestao-gerencia','precificacao'],
+  gerencia:     ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','relatorios','gestao-gerencia'],
   recepcao:     ['dashboard','agenda','comanda','clientes','venda-produto','venda-prof'],
   profissional: ['agenda','comissoes','meu-resumo'],
 };
@@ -1721,14 +1848,14 @@ function updateNbCmd(){
 }
 
 // ══════════ NAVIGATION ══════════
-const titles={dashboard:'Dashboard',agenda:'Agenda',comanda:'Comanda',clientes:'Clientes',historico:'Histórico de Atendimentos',servicos:'Serviços',profissionais:'Profissionais',estoque:'Estoque','venda-produto':'Venda para Clientes','venda-prof':'Venda para Profissionais',financeiro:'Financeiro',comissoes:'Comissões',relatorios:'Relatórios',acessos:'Controle de Acessos','meu-resumo':'Meu Resumo',configuracoes:'Configurações','gestao-gerencia':'Gestão da Gerência'};
+const titles={dashboard:'Dashboard',agenda:'Agenda',comanda:'Comanda',clientes:'Clientes',historico:'Histórico de Atendimentos',servicos:'Serviços',profissionais:'Profissionais',estoque:'Estoque','venda-produto':'Venda para Clientes','venda-prof':'Venda para Profissionais',financeiro:'Financeiro',comissoes:'Comissões',relatorios:'Relatórios',acessos:'Controle de Acessos','meu-resumo':'Meu Resumo',configuracoes:'Configurações','gestao-gerencia':'Gestão da Gerência',precificacao:'Precificação'};
 function go(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   $('s-'+id).classList.add('active');
   if(el)el.classList.add('active');
   $('tb-title').textContent=titles[id]||id;
-  const fn={dashboard:renderDash,agenda:renderAgenda,comanda:renderComanda,clientes:renderClientes,servicos:renderServicos,profissionais:renderProfs,estoque:renderEstoque,'venda-produto':renderVP,'venda-prof':renderVF,financeiro:renderFin,comissoes:renderComiss,relatorios:renderRel,acessos:renderAcessos,'meu-resumo':renderMeuResumo,configuracoes:renderConfig,'gestao-gerencia':renderGestaoGerencia};
+  const fn={dashboard:renderDash,agenda:renderAgenda,comanda:renderComanda,clientes:renderClientes,servicos:renderServicos,profissionais:renderProfs,estoque:renderEstoque,'venda-produto':renderVP,'venda-prof':renderVF,financeiro:renderFin,comissoes:renderComiss,relatorios:renderRel,acessos:renderAcessos,'meu-resumo':renderMeuResumo,configuracoes:renderConfig,'gestao-gerencia':renderGestaoGerencia,precificacao:renderPrecificacao};
   fn[id]&&fn[id]();
 }
 
@@ -1855,23 +1982,21 @@ function renderAgendaGrid(){
         </div>`;
       });
       ags.forEach(a=>{
-        // Cores por status
-        const cores = {
-          'Pendente':    {bg:'rgba(45,122,86,.12)',  border:'#2d7a56', emoji:'📅'},
-          'Confirmado':  {bg:'rgba(32,96,160,.15)',  border:'#2060a0', emoji:'✅'},
-          'Atendimento': {bg:'rgba(160,120,64,.2)',  border:'#a07840', emoji:'💇'},
-          'Concluído':   {bg:'rgba(100,100,100,.1)', border:'#666',    emoji:'✔'},
-          'Falta':       {bg:'rgba(192,57,43,.12)',  border:'#c0392b', emoji:'❌'},
-        };
-        const cor = cores[a.status]||cores['Pendente'];
         // Verifica se tem comanda aberta para esse agendamento
         const cmdAberta = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
         const status = cmdAberta ? 'Atendimento' : a.status;
-        const corFinal = cores[status]||cor;
+        const statusMap = {
+          'Pendente':    {cls:'appt-pendente',   emoji:'📅', cor:'#2d7a56'},
+          'Confirmado':  {cls:'appt-confirmado', emoji:'✅', cor:'#2060a0'},
+          'Atendimento': {cls:'appt-atendimento',emoji:'💇', cor:'#a07840'},
+          'Concluído':   {cls:'appt-concluido',  emoji:'✔',  cor:'#888'},
+          'Falta':       {cls:'appt-falta',      emoji:'❌', cor:'#c0392b'},
+        };
+        const st = statusMap[status]||statusMap['Pendente'];
         const clickHandler = !isProfCell ? `onclick="event.stopPropagation();abrirComandaDoAgendamento(${a.id})"` : '';
-        html+=`<div class="appt" style="background:${corFinal.bg};border-left-color:${corFinal.border};cursor:pointer" ${clickHandler}>
-          <div class="appt-name">${corFinal.emoji} ${cNome(a.cid).split(' ')[0]}</div>
-          <div class="appt-svc" style="font-size:10px">${sNome(a.sid)} · ${pNome(a.pid).split(' ')[0]}</div>
+        html+=`<div class="appt ${st.cls}" ${clickHandler}>
+          <div class="appt-name" style="color:${st.cor}">${st.emoji} ${cNome(a.cid).split(' ')[0]}</div>
+          <div class="appt-svc" style="color:${st.cor}">${sNome(a.sid)} · ${pNome(a.pid).split(' ')[0]}</div>
         </div>`;
       });
       html+='</div>';
@@ -3315,7 +3440,7 @@ function coletarDados(){
     agendamentos:DB.agendamentos, comandas:DB.comandas, estoque:DB.estoque,
     financeiro:DB.financeiro, vendas_clientes:DB.vendas_clientes, vendas_profs:DB.vendas_profs,
     historico:DB.historico, bloqueios:DB.bloqueios, config:DB.config, master:DB.master, nextId:DB.nextId, gestao:DB.gestao,
-    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes, notificacoes:DB.notificacoes||[],
+    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes, notificacoes:DB.notificacoes||[], custosProd:DB.custosProd||[],
   };
 }
 
@@ -3985,7 +4110,177 @@ function salvarInfoMes(){
   if(st){st.textContent='✓ Informações salvas!';setTimeout(()=>{st.textContent='☁ Sincronizado';},2000);}
 }
 
-// ══════════ NOTIFICAÇÕES ══════════
+// ══════════ PRECIFICAÇÃO ══════════
+function switchPrec(aba, el){
+  document.querySelectorAll('#s-precificacao .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  $('prec-calc').style.display = aba==='calc'?'block':'none';
+  $('prec-custos').style.display = aba==='custos'?'block':'none';
+  if(aba==='custos') renderCustosProd();
+}
+
+function renderPrecificacao(){
+  // Popula select de serviços
+  const sel=$('prec-servico');
+  if(sel){
+    sel.innerHTML='<option value="">-- Selecione para preencher --</option>';
+    DB.servicos.forEach(s=>{ sel.innerHTML+=`<option value="${s.id}">${s.nome} — ${fmt(s.preco)}</option>`; });
+  }
+  calcularPreco();
+}
+
+function preencherDadosServico(){
+  const sid=parseInt($('prec-servico').value);
+  if(!sid) return;
+  const s=DB.servicos.find(x=>x.id===sid);
+  if(!s) return;
+  // Busca custo de produto cadastrado para esse serviço
+  const custos=(DB.custosProd||[]).filter(c=>c.svcId===sid);
+  const totalCusto=custos.reduce((sum,c)=>sum+c.qtd*c.custo,0);
+  if(totalCusto>0) $('prec-custo-prod').value=totalCusto.toFixed(2);
+  // Busca comissão média do serviço
+  const comissoes=Object.values(s.comiss||{});
+  if(comissoes.length>0){
+    const media=comissoes.reduce((a,b)=>a+b,0)/comissoes.length;
+    $('prec-comissao').value=Math.round(media);
+  }
+  calcularPreco();
+}
+
+function calcularPreco(){
+  const custoProd  = parseFloat($('prec-custo-prod')?.value)||0;
+  const txCartao   = parseFloat($('prec-taxa-cartao')?.value)||0;
+  const imposto    = parseFloat($('prec-imposto')?.value)||0;
+  const comissao   = parseFloat($('prec-comissao')?.value)||0;
+  const fixo       = parseFloat($('prec-fixo')?.value)||0;
+  const variavel   = parseFloat($('prec-variavel')?.value)||0;
+  const lucro      = parseFloat($('prec-lucro')?.value)||0;
+
+  // Total de % sobre o preço
+  const totalPct = txCartao + imposto + comissao + fixo + variavel + lucro;
+
+  // Preço mínimo = custo / (1 - totalPct/100)
+  const precoMin = totalPct < 100 ? custoProd / (1 - totalPct/100) : 0;
+
+  // Breakdown
+  const valCartao  = precoMin * txCartao/100;
+  const valImposto = precoMin * imposto/100;
+  const valComissao= precoMin * comissao/100;
+  const valFixo    = precoMin * fixo/100;
+  const valVariavel= precoMin * variavel/100;
+  const valLucro   = precoMin * lucro/100;
+
+  const res = document.getElementById('prec-resultado');
+  if(!res) return;
+
+  if(totalPct>=100){
+    res.innerHTML='<div style="color:var(--danger);text-align:center;padding:16px">⚠ A soma das % ultrapassa 100%. Revise os valores.</div>';
+    return;
+  }
+
+  res.innerHTML=`
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Preço mínimo sugerido</div>
+      <div style="font-size:36px;font-weight:800;color:var(--rose)">${fmt(precoMin)}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>🧴 Custo de produto</span><span style="font-weight:600">${fmt(custoProd)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>💳 Taxa de cartão (${txCartao}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valCartao)}</span>
+      </div>
+      ${imposto>0?`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>📋 Imposto (${imposto}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valImposto)}</span>
+      </div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>👩 Comissão (${comissao}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valComissao)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>🏢 Custo fixo (${fixo}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valFixo)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>📦 Custo variável (${variavel}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valVariavel)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:rgba(45,122,86,.1);border-radius:8px;border:1px solid var(--success)">
+        <span>🎯 Lucro (${lucro}%)</span><span style="font-weight:700;color:var(--success)">+ ${fmt(valLucro)}</span>
+      </div>
+    </div>`;
+
+  // Simulação
+  const sim = document.getElementById('prec-simulacao');
+  if(sim){
+    const qtds=[5,10,20,30];
+    sim.innerHTML=`<table style="width:100%;font-size:13px">
+      <thead><tr><th>Atend./mês</th><th>Receita bruta</th><th>Lucro líquido</th></tr></thead>
+      <tbody>${qtds.map(q=>`<tr>
+        <td>${q}x</td>
+        <td style="font-weight:600">${fmt(precoMin*q)}</td>
+        <td style="font-weight:700;color:var(--success)">${fmt(valLucro*q)}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+}
+
+// ── CUSTO DE PRODUTO POR SERVIÇO ──
+function renderCustosProd(){
+  if(!DB.custosProd) DB.custosProd=[];
+  $('tb-custo-prod').innerHTML = DB.custosProd.length===0
+    ? '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Nenhum custo cadastrado</td></tr>'
+    : DB.custosProd.map(c=>{
+        const s=DB.servicos.find(x=>x.id===c.svcId);
+        const total=c.qtd*c.custo;
+        return `<tr>
+          <td><strong>${s?.nome||'—'}</strong></td>
+          <td>${c.produto}</td>
+          <td>${c.qtd} ${c.unidade}</td>
+          <td>${fmt(c.custo)}</td>
+          <td style="font-weight:700;color:var(--rose)">${fmt(total)}</td>
+          <td>
+            <button class="btn btn-ghost btn-xs" onclick="openModalCustoProd(${c.id})">✎</button>
+            <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirCustoProd(${c.id})">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+}
+
+function openModalCustoProd(id=null){
+  $('cp-id').value=id||'';
+  $('m-cp-title').textContent=id?'Editar Custo':'Registrar Custo de Produto';
+  populateSel('cp-servico',DB.servicos,'id','nome');
+  if(id){
+    const c=DB.custosProd.find(x=>x.id===id);
+    if(c){
+      $('cp-servico').value=c.svcId;
+      $('cp-produto').value=c.produto;
+      $('cp-qtd').value=c.qtd;
+      $('cp-unidade').value=c.unidade;
+      $('cp-custo').value=c.custo;
+      $('cp-obs').value=c.obs||'';
+    }
+  } else {
+    $('cp-produto').value='';$('cp-qtd').value=1;$('cp-custo').value='';$('cp-obs').value='';
+  }
+  openModal('m-custo-prod');
+}
+
+function salvarCustoProd(){
+  const svcId=parseInt($('cp-servico').value);
+  const produto=$('cp-produto').value.trim();
+  if(!svcId||!produto){alert('Preencha serviço e produto');return;}
+  const obj={svcId,produto,qtd:parseFloat($('cp-qtd').value)||1,unidade:$('cp-unidade').value,custo:parseFloat($('cp-custo').value)||0,obs:$('cp-obs').value};
+  const id=parseInt($('cp-id').value);
+  if(!DB.custosProd) DB.custosProd=[];
+  if(id){Object.assign(DB.custosProd.find(x=>x.id===id),obj);}
+  else{DB.custosProd.push({id:Date.now(),...obj});}
+  salvarDados();closeModal('m-custo-prod');renderCustosProd();
+}
+
+function excluirCustoProd(id){
+  if(!confirm('Excluir este custo?'))return;
+  DB.custosProd=DB.custosProd.filter(x=>x.id!==id);
+  salvarDados();renderCustosProd();
+}
 function verificarNotificacoes(){
   if(!usuarioLogado||usuarioLogado.acesso!=='profissional') return;
   const notifs=(DB.notificacoes||[]).filter(n=>n.pid===usuarioLogado.id&&!n.lida);
