@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -933,7 +934,15 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
     <!-- CALCULADORA -->
     <div id="prec-calc">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <!-- Sub-abas -->
+      <div style="display:flex;gap:8px;margin-bottom:18px">
+        <button class="btn btn-primary btn-sm" id="calc-tab-zero" onclick="switchCalc('zero',this)">🧮 Montar preço do zero</button>
+        <button class="btn btn-outline btn-sm" id="calc-tab-analise" onclick="switchCalc('analise',this)">🔍 Analisar preço atual</button>
+      </div>
+
+      <!-- MONTAR DO ZERO -->
+      <div id="calc-zero">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <!-- Entradas -->
         <div class="card">
           <div class="card-header"><span class="card-title">📥 Parâmetros do serviço</span></div>
@@ -990,9 +999,61 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
           </div>
         </div>
       </div>
-    </div>
+      </div><!-- /calc-zero -->
 
-    <!-- CUSTO DE PRODUTO POR SERVIÇO -->
+      <!-- ANALISAR PREÇO ATUAL -->
+      <div id="calc-analise" style="display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="card">
+            <div class="card-header"><span class="card-title">🔍 Análise do preço praticado</span></div>
+            <div class="card-body">
+              <div class="fg"><label class="fl">Serviço (opcional)</label>
+                <select class="fc" id="anal-servico" onchange="preencherDadosAnalise()">
+                  <option value="">-- Selecione para preencher --</option>
+                </select>
+              </div>
+              <div class="dv"></div>
+              <div class="fg">
+                <label class="fl" style="font-weight:700;color:var(--rose)">💵 Preço que você cobra hoje (R$)</label>
+                <input type="number" class="fc" id="anal-preco" step="0.01" placeholder="Ex: 80,00" oninput="analisarPreco()" style="font-size:18px;font-weight:700">
+              </div>
+              <div class="dv"></div>
+              <div class="fg">
+                <label class="fl" style="margin-bottom:6px">🧴 Custo de produtos (R$)</label>
+                <div style="display:flex;gap:8px;font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600">
+                  <span style="flex:2">Produto</span><span style="width:70px">Qtd</span><span style="width:90px">R$ unit.</span><span style="min-width:55px">Total</span>
+                </div>
+                <div id="anal-produtos-wrap"></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                  <button class="btn btn-outline btn-xs" onclick="adicionarProdutoAnalise()">+ produto</button>
+                  <span style="font-size:12px;font-weight:700">Total: <span id="anal-total-prod" style="color:var(--rose)">R$ 0,00</span></span>
+                </div>
+              </div>
+              <div class="dv"></div>
+              <div class="fg"><label class="fl">💳 Taxa de cartão (%)</label>
+                <input type="number" class="fc" id="anal-taxa" value="2.8" step="0.1" oninput="analisarPreco()">
+              </div>
+              <div class="fg"><label class="fl">📋 Imposto (%)</label>
+                <input type="number" class="fc" id="anal-imposto" value="0" step="0.1" oninput="analisarPreco()">
+              </div>
+              <div class="fg"><label class="fl">👩 Comissão profissional (%)</label>
+                <input type="number" class="fc" id="anal-comissao" value="40" step="1" oninput="analisarPreco()">
+              </div>
+              <div class="fg"><label class="fl">🏢 Custo fixo (%)</label>
+                <input type="number" class="fc" id="anal-fixo" value="15" step="1" oninput="analisarPreco()">
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">📊 Diagnóstico</span></div>
+            <div class="card-body" id="anal-resultado">
+              <div style="text-align:center;color:var(--text3);padding:32px">Informe seu preço e os custos ao lado para ver o diagnóstico</div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /calc-analise -->
+
+    </div><!-- /prec-calc -->
     <div id="prec-custos" style="display:none">
       <div style="display:grid;grid-template-columns:280px 1fr;gap:20px">
 
@@ -4136,13 +4197,153 @@ function switchPrec(aba, el){
   if(aba==='custos') renderCustosProd();
 }
 
+function switchCalc(aba, el){
+  document.querySelectorAll('#prec-calc .btn').forEach(b=>b.classList.remove('btn-primary'));
+  document.querySelectorAll('#prec-calc .btn').forEach(b=>b.classList.add('btn-outline'));
+  el.classList.remove('btn-outline'); el.classList.add('btn-primary');
+  $('calc-zero').style.display    = aba==='zero'?'block':'none';
+  $('calc-analise').style.display = aba==='analise'?'block':'none';
+  if(aba==='analise') renderProdutosAnalise();
+}
+
+// ── ANÁLISE DE PREÇO ATUAL ──
+let _produtosAnalise = [{produto:'',qtd:1,custo:0}];
+
+function preencherDadosAnalise(){
+  const sid=parseInt($('anal-servico').value);
+  if(!sid) return;
+  const s=DB.servicos.find(x=>x.id===sid);
+  if(!s) return;
+  // Preenche preço atual do serviço
+  $('anal-preco').value=s.preco;
+  // Busca custos cadastrados
+  const custos=(DB.custosProd||[]).filter(c=>c.svcId===sid);
+  if(custos.length>0) _produtosAnalise=custos.map(c=>({produto:c.produto,qtd:c.qtd,custo:c.custo}));
+  // Comissão média
+  const comissoes=Object.values(s.comiss||{});
+  if(comissoes.length>0) $('anal-comissao').value=Math.round(comissoes.reduce((a,b)=>a+b,0)/comissoes.length);
+  renderProdutosAnalise();
+  analisarPreco();
+}
+
+function renderProdutosAnalise(){
+  const wrap=document.getElementById('anal-produtos-wrap');
+  if(!wrap) return;
+  wrap.innerHTML=_produtosAnalise.map((p,i)=>`
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="text" class="fc" placeholder="Produto" value="${p.produto}" style="flex:2;padding:4px 8px;font-size:12px" oninput="_produtosAnalise[${i}].produto=this.value">
+      <input type="number" class="fc" value="${p.qtd}" step="0.01" style="width:60px;padding:4px 6px;font-size:12px;text-align:center" oninput="_produtosAnalise[${i}].qtd=parseFloat(this.value)||0;analisarPreco()">
+      <input type="number" class="fc" value="${p.custo||''}" step="0.01" placeholder="R$" style="width:80px;padding:4px 6px;font-size:12px;text-align:right" oninput="_produtosAnalise[${i}].custo=parseFloat(this.value)||0;analisarPreco()">
+      <span style="font-size:11px;color:var(--text2);width:50px;text-align:right">${fmt(p.qtd*p.custo)}</span>
+      ${_produtosAnalise.length>1?`<button onclick="_produtosAnalise.splice(${i},1);renderProdutosAnalise();analisarPreco()" style="background:none;border:none;cursor:pointer;color:var(--danger)">✕</button>`:''}
+    </div>`).join('');
+  const total=_produtosAnalise.reduce((s,p)=>s+p.qtd*p.custo,0);
+  const el=document.getElementById('anal-total-prod');
+  if(el) el.textContent=fmt(total);
+}
+
+function adicionarProdutoAnalise(){
+  _produtosAnalise.push({produto:'',qtd:1,custo:0});
+  renderProdutosAnalise();
+}
+
+function analisarPreco(){
+  const preco     = parseFloat($('anal-preco')?.value)||0;
+  const custoProd = _produtosAnalise.reduce((s,p)=>s+p.qtd*p.custo,0);
+  const txCartao  = parseFloat($('anal-taxa')?.value)||0;
+  const imposto   = parseFloat($('anal-imposto')?.value)||0;
+  const comissao  = parseFloat($('anal-comissao')?.value)||0;
+  const fixo      = parseFloat($('anal-fixo')?.value)||0;
+
+  // Atualiza total produtos
+  const el=document.getElementById('anal-total-prod');
+  if(el) el.textContent=fmt(custoProd);
+
+  const res=document.getElementById('anal-resultado');
+  if(!res) return;
+  if(!preco){res.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Informe o preço que você cobra hoje</div>';return;}
+
+  // Calcula cada custo sobre o preço praticado
+  const valCartao   = preco * txCartao/100;
+  const valImposto  = preco * imposto/100;
+  const valComissao = preco * comissao/100;
+  const valFixo     = preco * fixo/100;
+  const totalCustos = custoProd + valCartao + valImposto + valComissao + valFixo;
+  const lucroLiq    = preco - totalCustos;
+  const lucropct    = preco > 0 ? (lucroLiq/preco*100) : 0;
+
+  // Preço mínimo para cobrir tudo sem lucro
+  const totalPct = txCartao + imposto + comissao + fixo;
+  const precoMinimo = totalPct < 100 ? custoProd / (1 - totalPct/100) : 0;
+  const diferenca   = preco - precoMinimo;
+
+  const cor = lucroLiq > 0 ? 'var(--success)' : 'var(--danger)';
+  const icone = lucroLiq > 0 ? '✅' : '❌';
+  const situacao = lucroLiq > 0 ? 'LUCRO' : 'PREJUÍZO';
+
+  res.innerHTML=`
+    <div style="text-align:center;padding:16px;background:${lucroLiq>0?'rgba(45,122,86,.1)':'rgba(192,57,43,.1)'};border-radius:10px;margin-bottom:16px">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${icone} Situação atual</div>
+      <div style="font-size:28px;font-weight:800;color:${cor}">${lucroLiq>=0?'+':''}${fmt(lucroLiq)}</div>
+      <div style="font-size:12px;color:${cor};font-weight:600">${situacao} de ${Math.abs(lucropct).toFixed(1)}% por atendimento</div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>💵 Preço cobrado</span><span style="font-weight:700">${fmt(preco)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>🧴 Custo de produto</span><span style="font-weight:600;color:var(--danger)">− ${fmt(custoProd)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>💳 Taxa cartão (${txCartao}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valCartao)}</span>
+      </div>
+      ${imposto>0?`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>📋 Imposto (${imposto}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valImposto)}</span>
+      </div>`:''}
+      <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>👩 Comissão (${comissao}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valComissao)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>🏢 Custo fixo (${fixo}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valFixo)}</span>
+      </div>
+    </div>
+
+    <div style="background:var(--bg2);border-radius:8px;padding:12px;font-size:12.5px">
+      <div style="font-weight:700;margin-bottom:6px">📌 Comparativo</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span>Preço mínimo para cobrir custos</span><span style="font-weight:700">${fmt(precoMinimo)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span>Sua diferença</span>
+        <span style="font-weight:700;color:${diferenca>=0?'var(--success)':'var(--danger)'}">${diferenca>=0?'+':''}${fmt(diferenca)}</span>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;font-size:12px;color:var(--text3)">
+      📈 Simulação com ${fmt(preco)} cobrado:
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+        ${[5,10,20,30].map(q=>`<div style="background:var(--bg);border-radius:6px;padding:6px 10px;text-align:center">
+          <div style="font-size:11px;color:var(--text3)">${q} atend./mês</div>
+          <div style="font-weight:700;color:${cor}">${lucroLiq>=0?'+':''}${fmt(lucroLiq*q)}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+}
+
 function renderPrecificacao(){
   const sel=$('prec-servico');
   if(sel){
     sel.innerHTML='<option value="">-- Selecione para preencher --</option>';
     DB.servicos.forEach(s=>{ sel.innerHTML+=`<option value="${s.id}">${s.nome} — ${fmt(s.preco)}</option>`; });
   }
+  const sel2=$('anal-servico');
+  if(sel2){
+    sel2.innerHTML='<option value="">-- Selecione para preencher --</option>';
+    DB.servicos.forEach(s=>{ sel2.innerHTML+=`<option value="${s.id}">${s.nome} — ${fmt(s.preco)}</option>`; });
+  }
   renderProdutosCalc();
+  renderProdutosAnalise();
   calcularPreco();
 }
 
