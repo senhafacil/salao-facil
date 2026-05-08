@@ -995,20 +995,25 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
     <!-- CUSTO DE PRODUTO POR SERVIÇO -->
     <div id="prec-custos" style="display:none">
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-header">
-          <span class="card-title">🧴 Custo de produto por serviço</span>
-          <button class="btn btn-primary btn-sm" onclick="openModalCustoProd()">+ Registrar custo</button>
+      <div style="display:grid;grid-template-columns:280px 1fr;gap:20px">
+
+        <!-- Lista de serviços -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Serviços</span></div>
+          <div id="cp-servicos-lista" style="padding:4px 0"></div>
         </div>
-        <div style="background:var(--info-l);padding:10px 18px;font-size:12px;color:var(--info)">
-          💡 Registre quanto gasta de cada produto em cada serviço. Isso alimenta automaticamente a calculadora de precificação.
+
+        <!-- Produtos do serviço selecionado -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title" id="cp-svc-titulo">Selecione um serviço</span>
+            <button class="btn btn-primary btn-sm" id="cp-add-btn" onclick="adicionarLinhaCusto()" style="display:none">+ Adicionar produto</button>
+          </div>
+          <div id="cp-produtos-area">
+            <div style="padding:32px;text-align:center;color:var(--text3)">← Selecione um serviço para ver e editar seus custos de produto</div>
+          </div>
         </div>
-        <div class="tw">
-          <table>
-            <thead><tr><th>Serviço</th><th>Produto</th><th>Qtd usada</th><th>Custo unitário</th><th>Custo total</th><th></th></tr></thead>
-            <tbody id="tb-custo-prod"></tbody>
-          </table>
-        </div>
+
       </div>
     </div>
   </div>
@@ -4255,64 +4260,102 @@ function calcularPreco(){
 }
 
 // ── CUSTO DE PRODUTO POR SERVIÇO ──
+let _cpSvcAtivo = null;
+
 function renderCustosProd(){
   if(!DB.custosProd) DB.custosProd=[];
-  $('tb-custo-prod').innerHTML = DB.custosProd.length===0
-    ? '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Nenhum custo cadastrado</td></tr>'
-    : DB.custosProd.map(c=>{
-        const s=DB.servicos.find(x=>x.id===c.svcId);
-        const total=c.qtd*c.custo;
-        return `<tr>
-          <td><strong>${s?.nome||'—'}</strong></td>
-          <td>${c.produto}</td>
-          <td>${c.qtd} ${c.unidade}</td>
-          <td>${fmt(c.custo)}</td>
-          <td style="font-weight:700;color:var(--rose)">${fmt(total)}</td>
-          <td>
-            <button class="btn btn-ghost btn-xs" onclick="openModalCustoProd(${c.id})">✎</button>
-            <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirCustoProd(${c.id})">🗑</button>
-          </td>
-        </tr>`;
-      }).join('');
+  // Lista de serviços na esquerda
+  $('cp-servicos-lista').innerHTML = DB.servicos.map(s=>{
+    const custos = DB.custosProd.filter(c=>c.svcId===s.id);
+    const total = custos.reduce((sum,c)=>sum+c.qtd*c.custo,0);
+    const ativo = _cpSvcAtivo===s.id;
+    return `<div onclick="selecionarSvcCusto(${s.id})" style="padding:10px 16px;cursor:pointer;border-left:3px solid ${ativo?'var(--rose)':'transparent'};background:${ativo?'var(--rose-light)':'transparent'};transition:.15s">
+      <div style="font-weight:600;font-size:13px">${s.nome}</div>
+      <div style="font-size:11px;color:var(--text3)">${custos.length} produto(s) · ${fmt(total)}</div>
+    </div>`;
+  }).join('');
+
+  // Área de produtos
+  if(_cpSvcAtivo) renderProdutosSvc(_cpSvcAtivo);
 }
 
-function openModalCustoProd(id=null){
-  $('cp-id').value=id||'';
-  $('m-cp-title').textContent=id?'Editar Custo':'Registrar Custo de Produto';
-  populateSel('cp-servico',DB.servicos,'id','nome');
-  if(id){
-    const c=DB.custosProd.find(x=>x.id===id);
-    if(c){
-      $('cp-servico').value=c.svcId;
-      $('cp-produto').value=c.produto;
-      $('cp-qtd').value=c.qtd;
-      $('cp-unidade').value=c.unidade;
-      $('cp-custo').value=c.custo;
-      $('cp-obs').value=c.obs||'';
-    }
+function selecionarSvcCusto(sid){
+  _cpSvcAtivo = sid;
+  renderCustosProd();
+}
+
+function renderProdutosSvc(sid){
+  const s = DB.servicos.find(x=>x.id===sid);
+  if(!s) return;
+  $('cp-svc-titulo').textContent = `🧴 ${s.nome}`;
+  $('cp-add-btn').style.display='';
+
+  const custos = DB.custosProd.filter(c=>c.svcId===sid);
+  const total = custos.reduce((sum,c)=>sum+c.qtd*c.custo,0);
+
+  let html = `<div style="padding:0 16px">
+    <div style="display:grid;grid-template-columns:2fr 80px 80px 100px 80px 36px;gap:8px;padding:8px 0;font-size:11px;font-weight:700;color:var(--text3);border-bottom:1px solid var(--bg2)">
+      <span>Produto/Insumo</span><span>Qtd</span><span>Unidade</span><span>Custo unit.</span><span>Total</span><span></span>
+    </div>`;
+
+  if(custos.length===0){
+    html += `<div style="padding:24px;text-align:center;color:var(--text3)">Nenhum produto cadastrado. Clique em "+ Adicionar produto".</div>`;
   } else {
-    $('cp-produto').value='';$('cp-qtd').value=1;$('cp-custo').value='';$('cp-obs').value='';
+    custos.forEach((c,i)=>{
+      html+=`<div style="display:grid;grid-template-columns:2fr 80px 80px 100px 80px 36px;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2);align-items:center">
+        <input type="text" class="fc" value="${c.produto}" style="padding:5px 8px;font-size:12px" onchange="editarCusto(${c.id},'produto',this.value)">
+        <input type="number" class="fc" value="${c.qtd}" step="0.01" style="padding:5px 8px;font-size:12px;text-align:center" onchange="editarCusto(${c.id},'qtd',this.value)">
+        <select class="fc" style="padding:5px 8px;font-size:12px" onchange="editarCusto(${c.id},'unidade',this.value)">
+          ${['g','ml','unidade','ampola','sachê'].map(u=>`<option ${c.unidade===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+        <input type="number" class="fc" value="${c.custo}" step="0.01" style="padding:5px 8px;font-size:12px;text-align:right" onchange="editarCusto(${c.id},'custo',this.value)">
+        <span style="font-weight:700;font-size:13px;color:var(--rose)">${fmt(c.qtd*c.custo)}</span>
+        <button onclick="excluirCustoProd(${c.id})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:16px">🗑</button>
+      </div>`;
+    });
   }
-  openModal('m-custo-prod');
+
+  html += `<div style="display:flex;justify-content:flex-end;padding:12px 0;border-top:2px solid var(--bg3);margin-top:4px">
+    <span style="font-size:14px;font-weight:700">Total de produto por serviço: <span style="color:var(--rose)">${fmt(total)}</span></span>
+  </div></div>`;
+
+  $('cp-produtos-area').innerHTML = html;
 }
 
-function salvarCustoProd(){
-  const svcId=parseInt($('cp-servico').value);
-  const produto=$('cp-produto').value.trim();
-  if(!svcId||!produto){alert('Preencha serviço e produto');return;}
-  const obj={svcId,produto,qtd:parseFloat($('cp-qtd').value)||1,unidade:$('cp-unidade').value,custo:parseFloat($('cp-custo').value)||0,obs:$('cp-obs').value};
-  const id=parseInt($('cp-id').value);
+function adicionarLinhaCusto(){
+  if(!_cpSvcAtivo) return;
   if(!DB.custosProd) DB.custosProd=[];
-  if(id){Object.assign(DB.custosProd.find(x=>x.id===id),obj);}
-  else{DB.custosProd.push({id:Date.now(),...obj});}
-  salvarDados();closeModal('m-custo-prod');renderCustosProd();
+  DB.custosProd.push({id:Date.now(), svcId:_cpSvcAtivo, produto:'', qtd:1, unidade:'g', custo:0, obs:''});
+  salvarDados();
+  renderCustosProd();
+  renderProdutosSvc(_cpSvcAtivo);
+  // Foca no último campo de produto
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('#cp-produtos-area input[type=text]');
+    if(inputs.length) inputs[inputs.length-1].focus();
+  },50);
+}
+
+function editarCusto(id, campo, valor){
+  const c = DB.custosProd.find(x=>x.id===id);
+  if(!c) return;
+  if(campo==='qtd'||campo==='custo') c[campo]=parseFloat(valor)||0;
+  else c[campo]=valor;
+  salvarDados();
+  // Atualiza só os totais sem re-renderizar tudo
+  renderCustosProd();
+  if(_cpSvcAtivo) renderProdutosSvc(_cpSvcAtivo);
 }
 
 function excluirCustoProd(id){
-  if(!confirm('Excluir este custo?'))return;
-  DB.custosProd=DB.custosProd.filter(x=>x.id!==id);
-  salvarDados();renderCustosProd();
+  if(!confirm('Remover este produto?')) return;
+  DB.custosProd = DB.custosProd.filter(x=>x.id!==id);
+  salvarDados();
+  renderCustosProd();
+  if(_cpSvcAtivo) renderProdutosSvc(_cpSvcAtivo);
 }
+
+function openModalCustoProd(){ /* não usado mais */ }
 function verificarNotificacoes(){
   if(!usuarioLogado||usuarioLogado.acesso!=='profissional') return;
   const notifs=(DB.notificacoes||[]).filter(n=>n.pid===usuarioLogado.id&&!n.lida);
