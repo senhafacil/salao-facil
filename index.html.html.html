@@ -974,8 +974,10 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
             <div class="fg"><label class="fl">👩 Comissão profissional (%)</label>
               <input type="number" class="fc" id="prec-comissao" value="40" step="1" oninput="calcularPreco()">
             </div>
-            <div class="fg"><label class="fl">🏢 Custo fixo (%)</label>
-              <input type="number" class="fc" id="prec-fixo" value="15" step="1" oninput="calcularPreco()" placeholder="Ex: aluguel, água, luz">
+            <div class="fg">
+              <label class="fl">🏢 Custo fixo por atendimento (R$)</label>
+              <input type="number" class="fc" id="prec-fixo" value="0" step="0.01" oninput="calcularPreco()" placeholder="Ex: R$ 15,00 por atendimento">
+              <div style="font-size:11px;color:var(--text3);margin-top:4px">💡 Divida seu custo fixo mensal (aluguel, água, luz...) pela quantidade de atendimentos do mês</div>
             </div>
             <div class="fg"><label class="fl">🎯 Lucro desejado (%)</label>
               <input type="number" class="fc" id="prec-lucro" value="20" step="1" oninput="calcularPreco()">
@@ -1039,8 +1041,9 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
               <div class="fg"><label class="fl">👩 Comissão profissional (%)</label>
                 <input type="number" class="fc" id="anal-comissao" value="40" step="1" oninput="analisarPreco()">
               </div>
-              <div class="fg"><label class="fl">🏢 Custo fixo (%)</label>
-                <input type="number" class="fc" id="anal-fixo" value="15" step="1" oninput="analisarPreco()">
+              <div class="fg"><label class="fl">🏢 Custo fixo por atendimento (R$)</label>
+                <input type="number" class="fc" id="anal-fixo" value="0" step="0.01" oninput="analisarPreco()" placeholder="Ex: R$ 15,00">
+                <div style="font-size:11px;color:var(--text3);margin-top:3px">💡 Custo fixo mensal ÷ nº de atendimentos</div>
               </div>
             </div>
           </div>
@@ -4250,10 +4253,10 @@ function adicionarProdutoAnalise(){
 function analisarPreco(){
   const preco     = parseFloat($('anal-preco')?.value)||0;
   const custoProd = _produtosAnalise.reduce((s,p)=>s+p.qtd*p.custo,0);
+  const custoFixo = parseFloat($('anal-fixo')?.value)||0;
   const txCartao  = parseFloat($('anal-taxa')?.value)||0;
   const imposto   = parseFloat($('anal-imposto')?.value)||0;
   const comissao  = parseFloat($('anal-comissao')?.value)||0;
-  const fixo      = parseFloat($('anal-fixo')?.value)||0;
 
   // Atualiza total produtos
   const el=document.getElementById('anal-total-prod');
@@ -4263,18 +4266,18 @@ function analisarPreco(){
   if(!res) return;
   if(!preco){res.innerHTML='<div style="text-align:center;color:var(--text3);padding:32px">Informe o preço que você cobra hoje</div>';return;}
 
-  // Calcula cada custo sobre o preço praticado
+  // Custos em R$ sobre o preço praticado
   const valCartao   = preco * txCartao/100;
   const valImposto  = preco * imposto/100;
   const valComissao = preco * comissao/100;
-  const valFixo     = preco * fixo/100;
-  const totalCustos = custoProd + valCartao + valImposto + valComissao + valFixo;
+  // Custo fixo agora é em R$ por atendimento
+  const totalCustos = custoProd + custoFixo + valCartao + valImposto + valComissao;
   const lucroLiq    = preco - totalCustos;
   const lucropct    = preco > 0 ? (lucroLiq/preco*100) : 0;
 
-  // Preço mínimo para cobrir tudo sem lucro
-  const totalPct = txCartao + imposto + comissao + fixo;
-  const precoMinimo = totalPct < 100 ? custoProd / (1 - totalPct/100) : 0;
+  // Preço mínimo = custos fixos R$ / (1 - % sobre preço)
+  const totalPct    = txCartao + imposto + comissao;
+  const precoMinimo = totalPct < 100 ? (custoProd + custoFixo) / (1 - totalPct/100) : 0;
   const diferenca   = preco - precoMinimo;
 
   const cor = lucroLiq > 0 ? 'var(--success)' : 'var(--danger)';
@@ -4295,6 +4298,9 @@ function analisarPreco(){
       <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
         <span>🧴 Custo de produto</span><span style="font-weight:600;color:var(--danger)">− ${fmt(custoProd)}</span>
       </div>
+      ${custoFixo>0?`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
+        <span>🏢 Custo fixo</span><span style="font-weight:600;color:var(--danger)">− ${fmt(custoFixo)}</span>
+      </div>`:''}
       <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg);border-radius:8px">
         <span>💳 Taxa cartão (${txCartao}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valCartao)}</span>
       </div>
@@ -4396,30 +4402,31 @@ function preencherDadosServico(){
 }
 
 function calcularPreco(){
-  // Custo de produto = soma dos produtos (valor fixo em R$)
+  // Custos fixos em R$ por atendimento
   const custoProd  = _produtosCalc.reduce((s,p)=>s+p.qtd*p.custo,0);
+  const custoFixo  = parseFloat($('prec-fixo')?.value)||0;
+  const totalFixoR = custoProd + custoFixo; // Total de custos fixos em R$
+
+  // % sobre o preço final
   const txCartao   = parseFloat($('prec-taxa-cartao')?.value)||0;
   const imposto    = parseFloat($('prec-imposto')?.value)||0;
   const comissao   = parseFloat($('prec-comissao')?.value)||0;
-  const fixo       = parseFloat($('prec-fixo')?.value)||0;
   const lucro      = parseFloat($('prec-lucro')?.value)||0;
 
-  // As % incidem sobre o preço final (exceto custo produto que é fixo em R$)
-  const totalPct = txCartao + imposto + comissao + fixo + lucro;
+  // Fórmula correta:
+  // Preço = CustosFixosR$ / (1 - (txCartao + imposto + comissao + lucro) / 100)
+  const totalPct = txCartao + imposto + comissao + lucro;
 
-  if(totalPct>=100){
+  if(totalPct >= 100){
     const res=document.getElementById('prec-resultado');
-    if(res) res.innerHTML='<div style="color:var(--danger);text-align:center;padding:16px">⚠ A soma das % ultrapassa 100%. Revise os valores.</div>';
+    if(res) res.innerHTML='<div style="color:var(--danger);text-align:center;padding:16px">⚠ A soma das porcentagens ultrapassa 100%. Revise.</div>';
     return;
   }
 
-  // Preço = (custoProduto) / (1 - totalPct/100)
-  const precoMin = custoProd / (1 - totalPct/100);
-
+  const precoMin   = totalFixoR / (1 - totalPct/100);
   const valCartao  = precoMin * txCartao/100;
   const valImposto = precoMin * imposto/100;
   const valComissao= precoMin * comissao/100;
-  const valFixo    = precoMin * fixo/100;
   const valLucro   = precoMin * lucro/100;
 
   const res = document.getElementById('prec-resultado');
@@ -4433,8 +4440,11 @@ function calcularPreco(){
     </div>
     <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
-        <span>🧴 Custo de produto (fixo)</span><span style="font-weight:600">${fmt(custoProd)}</span>
+        <span>🧴 Custo de produto</span><span style="font-weight:600">${fmt(custoProd)}</span>
       </div>
+      ${custoFixo>0?`<div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
+        <span>🏢 Custo fixo por atend.</span><span style="font-weight:600">${fmt(custoFixo)}</span>
+      </div>`:''}
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
         <span>💳 Taxa de cartão (${txCartao}%)</span><span style="font-weight:600;color:var(--danger)">− ${fmt(valCartao)}</span>
       </div>
@@ -4443,9 +4453,6 @@ function calcularPreco(){
       </div>`:''}
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
         <span>👩 Comissão (${comissao}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valComissao)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:7px 10px;background:var(--bg);border-radius:8px">
-        <span>🏢 Custo fixo (${fixo}%)</span><span style="font-weight:600;color:var(--warn)">− ${fmt(valFixo)}</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:7px 10px;background:rgba(45,122,86,.1);border-radius:8px;border:1px solid var(--success)">
         <span>🎯 Lucro (${lucro}%)</span><span style="font-weight:700;color:var(--success)">+ ${fmt(valLucro)}</span>
