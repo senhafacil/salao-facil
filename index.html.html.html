@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -365,6 +366,8 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       <button class="nb" onclick="go('meu-resumo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Meu Resumo</button>
       <button class="nb" onclick="openModalMinhaSenha()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Minha Senha</button>
       <button class="nb" onclick="go('gestao-gerencia',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Gestão Gerência</button>
+      <button class="nb" onclick="go('fluxo-caixa',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Fluxo de Caixa</button>
+      <button class="nb" onclick="go('dre',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>DRE — Resultados</button>
       <button class="nb" onclick="go('precificacao',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>Precificação</button>
       <button class="nb" onclick="go('configuracoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>Configurações</button>
     </div>
@@ -1081,6 +1084,134 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     </div>
   </div>
 
+  <!-- ══ FLUXO DE CAIXA ══ -->
+  <div id="s-fluxo-caixa" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div class="tabs" style="margin:0">
+        <button class="tab active" onclick="switchFluxo('lancamentos',this)">📋 Lançamentos</button>
+        <button class="tab" onclick="switchFluxo('diario',this)">📅 Diário</button>
+        <button class="tab" onclick="switchFluxo('mensal',this)">📆 Mensal</button>
+        <button class="tab" onclick="switchFluxo('config',this)">⚙ Categorias</button>
+      </div>
+      <button class="btn btn-primary btn-sm" id="btn-novo-lanc" onclick="openModalFluxo()">+ Novo lançamento</button>
+    </div>
+
+    <!-- LANÇAMENTOS -->
+    <div id="fluxo-lancamentos">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <select class="fc" style="width:160px" id="fc-fil-mes" onchange="renderFluxoLanc()">
+          <option value="">Todos os meses</option>
+        </select>
+        <select class="fc" style="width:150px" id="fc-fil-tipo" onchange="renderFluxoLanc()">
+          <option value="">Todos os tipos</option>
+          <option value="indireta">Despesa Indireta</option>
+          <option value="direta">Despesa Direta</option>
+        </select>
+        <select class="fc" style="width:150px" id="fc-fil-status" onchange="renderFluxoLanc()">
+          <option value="">Todos os status</option>
+          <option value="pago">Pago</option>
+          <option value="aberto">Em aberto</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="tw">
+          <table>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Centro Custo</th><th>Forma Pgto</th><th>Valor</th><th>Status</th><th>Obs</th><th></th></tr></thead>
+            <tbody id="tb-fluxo"></tbody>
+          </table>
+        </div>
+        <div style="padding:12px 16px;display:flex;gap:20px;font-size:13px;border-top:1px solid var(--bg2)" id="fluxo-totais"></div>
+      </div>
+    </div>
+
+    <!-- DIÁRIO -->
+    <div id="fluxo-diario" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
+        <input type="date" class="fc" style="width:180px" id="fc-dia-sel" onchange="renderFluxoDiario()">
+      </div>
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px" id="fc-dia-metrics"></div>
+      <div class="card"><div class="tw"><table>
+        <thead><tr><th>Descrição</th><th>Tipo</th><th>Forma Pgto</th><th>Valor</th><th>Status</th></tr></thead>
+        <tbody id="tb-fluxo-dia"></tbody>
+      </table></div></div>
+    </div>
+
+    <!-- MENSAL -->
+    <div id="fluxo-mensal" style="display:none">
+      <div style="display:flex;gap:10px;margin-bottom:14px;align-items:center">
+        <select class="fc" style="width:180px" id="fc-mes-sel" onchange="renderFluxoMensal()"></select>
+      </div>
+      <div class="metrics-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px" id="fc-mes-metrics"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card"><div class="card-header"><span class="card-title">Despesas Indiretas</span></div>
+          <div class="tw"><table><thead><tr><th>Categoria</th><th>Total</th><th>%</th></tr></thead><tbody id="tb-fc-ind"></tbody></table></div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Despesas Diretas</span></div>
+          <div class="tw"><table><thead><tr><th>Categoria</th><th>Total</th><th>%</th></tr></thead><tbody id="tb-fc-dir"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="fluxo-config" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Plano de Contas</span>
+            <button class="btn btn-primary btn-sm" onclick="openModalTipoDesp()">+ Adicionar</button>
+          </div>
+          <div class="tw"><table><thead><tr><th>Nome</th><th>Tipo</th><th></th></tr></thead><tbody id="tb-tipos-desp"></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Centros de Custo</span>
+            <button class="btn btn-primary btn-sm" onclick="openModalCC()">+ Adicionar</button>
+          </div>
+          <div class="tw"><table><thead><tr><th>Nome</th><th></th></tr></thead><tbody id="tb-cc"></tbody></table></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><span class="card-title">🎯 Metas de resultado (%)</span></div>
+        <div class="card-body" style="display:flex;gap:16px;flex-wrap:wrap">
+          <div class="fg" style="flex:1"><label class="fl">Custo Indireto desejado (%)</label>
+            <input type="number" class="fc" id="meta-ind" step="1" oninput="salvarMetasDRE()">
+          </div>
+          <div class="fg" style="flex:1"><label class="fl">Custo Direto desejado (%)</label>
+            <input type="number" class="fc" id="meta-dir" step="1" oninput="salvarMetasDRE()">
+          </div>
+          <div class="fg" style="flex:1"><label class="fl">Lucro desejado (%)</label>
+            <input type="number" class="fc" id="meta-lucro-dre" step="1" oninput="salvarMetasDRE()">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DRE ══ -->
+  <div id="s-dre" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <h2 style="font-size:18px;margin-bottom:4px">Resultado por Competência</h2>
+        <div style="font-size:12px;color:var(--text3)">Baseado no faturamento do sistema + despesas lançadas no fluxo de caixa</div>
+      </div>
+      <select class="fc" style="width:160px" id="dre-ano" onchange="renderDRE()"></select>
+    </div>
+    <!-- Metas -->
+    <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      <div style="background:#7b3f9e;border-radius:8px;padding:10px 20px;color:#fff;text-align:center;min-width:160px">
+        <div style="font-size:10px;opacity:.8">CUSTO INDIRETO DESEJADO</div>
+        <div style="font-size:22px;font-weight:700" id="dre-meta-ind">35%</div>
+      </div>
+      <div style="background:#4a6fa5;border-radius:8px;padding:10px 20px;color:#fff;text-align:center;min-width:160px">
+        <div style="font-size:10px;opacity:.8">CUSTO DIRETO DESEJADO</div>
+        <div style="font-size:22px;font-weight:700" id="dre-meta-dir">55%</div>
+      </div>
+      <div style="background:#2d7a56;border-radius:8px;padding:10px 20px;color:#fff;text-align:center;min-width:160px">
+        <div style="font-size:10px;opacity:.8">LUCRO DESEJADO</div>
+        <div style="font-size:22px;font-weight:700" id="dre-meta-lucro">10%</div>
+      </div>
+    </div>
+    <div id="dre-corpo" style="overflow-x:auto"></div>
+  </div>
+
   <!-- ══ CONFIGURAÇÕES ══ -->
   <div id="s-configuracoes" class="section">
     <div style="margin-bottom:20px">
@@ -1496,6 +1627,86 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
   </div>
 </div>
 
+<!-- Modal lançamento fluxo de caixa -->
+<div class="mo" id="m-fluxo">
+  <div class="modal narrow">
+    <div class="mh"><span class="mt" id="m-fluxo-title">Novo Lançamento</span><button class="xbtn" onclick="closeModal('m-fluxo')">×</button></div>
+    <div class="mb">
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Data *</label><input type="date" class="fc" id="fl-data"></div>
+        <div class="fg"><label class="fl">Valor (R$) *</label><input type="number" class="fc" id="fl-valor" step="0.01" placeholder="0,00"></div>
+      </div>
+      <div class="fg"><label class="fl">Descrição *</label><input type="text" class="fc" id="fl-desc" placeholder="Ex: Conta de energia"></div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Tipo de despesa *</label>
+          <select class="fc" id="fl-tipo-desp"><option value="">Selecione...</option></select>
+        </div>
+        <div class="fg"><label class="fl">Centro de custo</label>
+          <select class="fc" id="fl-cc"><option value="">Sem centro</option></select>
+        </div>
+      </div>
+      <div class="fr c2">
+        <div class="fg"><label class="fl">Forma de pagamento</label>
+          <select class="fc" id="fl-forma">
+            <option value="dinheiro">💵 Dinheiro</option>
+            <option value="banco">🏦 Banco/Transferência</option>
+            <option value="pix">⚡ Pix</option>
+            <option value="cartao">💳 Cartão</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Status</label>
+          <select class="fc" id="fl-status">
+            <option value="pago">✅ Pago</option>
+            <option value="aberto">⏳ Em aberto</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Observação</label><input type="text" class="fc" id="fl-obs" placeholder="Opcional"></div>
+      <input type="hidden" id="fl-id">
+    </div>
+    <div class="mf">
+      <button class="btn btn-outline" onclick="closeModal('m-fluxo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarFluxo()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal tipo despesa -->
+<div class="mo" id="m-tipo-desp">
+  <div class="modal narrow">
+    <div class="mh"><span class="mt">Nova Categoria</span><button class="xbtn" onclick="closeModal('m-tipo-desp')">×</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Nome *</label><input type="text" class="fc" id="td-nome" placeholder="Ex: Combustível"></div>
+      <div class="fg"><label class="fl">Tipo</label>
+        <select class="fc" id="td-tipo">
+          <option value="indireta">Despesa Indireta</option>
+          <option value="direta">Despesa Direta</option>
+        </select>
+      </div>
+      <input type="hidden" id="td-id">
+    </div>
+    <div class="mf">
+      <button class="btn btn-outline" onclick="closeModal('m-tipo-desp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarTipoDesp()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal centro de custo -->
+<div class="mo" id="m-cc">
+  <div class="modal narrow">
+    <div class="mh"><span class="mt">Centro de Custo</span><button class="xbtn" onclick="closeModal('m-cc')">×</button></div>
+    <div class="mb">
+      <div class="fg"><label class="fl">Nome *</label><input type="text" class="fc" id="cc-nome" placeholder="Ex: Operacional"></div>
+      <input type="hidden" id="cc-id">
+    </div>
+    <div class="mf">
+      <button class="btn btn-outline" onclick="closeModal('m-cc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCC()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal custo de produto -->
 <div class="mo" id="m-custo-prod">
   <div class="modal narrow">
@@ -1748,6 +1959,33 @@ const DB = {
   pgto_comissoes:[],
   notificacoes:[],
   custosProd:[],
+  fluxo:[],
+  fluxoConfig:{
+    tiposDesp:[
+      {id:1,nome:'Água',tipo:'indireta'},
+      {id:2,nome:'Aluguel',tipo:'indireta'},
+      {id:3,nome:'Energia Elétrica',tipo:'indireta'},
+      {id:4,nome:'Internet/Telefone',tipo:'indireta'},
+      {id:5,nome:'Marketing e Publicidade',tipo:'indireta'},
+      {id:6,nome:'Material de Limpeza',tipo:'indireta'},
+      {id:7,nome:'Contabilidade',tipo:'indireta'},
+      {id:8,nome:'Rateio/Comissão',tipo:'direta'},
+      {id:9,nome:'Produto/Descartável',tipo:'direta'},
+      {id:10,nome:'Taxa de Cartão',tipo:'direta'},
+      {id:11,nome:'Imposto',tipo:'direta'},
+    ],
+    centrosCusto:[
+      {id:1,nome:'Administrativo'},
+      {id:2,nome:'Operacional'},
+      {id:3,nome:'Comercial'},
+      {id:4,nome:'Financeiro'},
+    ],
+    nextIdTipo:12,
+    nextIdCC:5,
+    metaIndDireta:35,
+    metaDireta:55,
+    metaLucro:10,
+  },
   bloqueios:[],
 };
 
@@ -1763,7 +2001,7 @@ const ACESSO_LABELS = {
 
 // O que cada nível pode ver (ids das seções do menu)
 const ACESSO_MENU = {
-  master:       ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','financeiro','comissoes','relatorios','configuracoes','gestao-gerencia','precificacao'],
+  master:       ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','financeiro','comissoes','relatorios','configuracoes','gestao-gerencia','precificacao','fluxo-caixa','dre'],
   gerencia:     ['dashboard','agenda','comanda','clientes','servicos','profissionais','estoque','venda-produto','venda-prof','relatorios','gestao-gerencia'],
   recepcao:     ['dashboard','agenda','comanda','clientes','venda-produto','venda-prof'],
   profissional: ['agenda','comissoes','meu-resumo'],
@@ -1922,7 +2160,16 @@ function updateNbCmd(){
 }
 
 // ══════════ NAVIGATION ══════════
-const titles={dashboard:'Dashboard',agenda:'Agenda',comanda:'Comanda',clientes:'Clientes',historico:'Histórico de Atendimentos',servicos:'Serviços',profissionais:'Profissionais',estoque:'Estoque','venda-produto':'Venda para Clientes','venda-prof':'Venda para Profissionais',financeiro:'Financeiro',comissoes:'Comissões',relatorios:'Relatórios',acessos:'Controle de Acessos','meu-resumo':'Meu Resumo',configuracoes:'Configurações','gestao-gerencia':'Gestão da Gerência',precificacao:'Precificação'};
+const titles={dashboard:'Dashboard',agenda:'Agenda',comanda:'Comanda',clientes:'Clientes',historico:'Histórico de Atendimentos',servicos:'Serviços',profissionais:'Profissionais',estoque:'Estoque','venda-produto':'Venda para Clientes','venda-prof':'Venda para Profissionais',financeiro:'Financeiro',comissoes:'Comissões',relatorios:'Relatórios',acessos:'Controle de Acessos','meu-resumo':'Meu Resumo',configuracoes:'Configurações','gestao-gerencia':'Gestão da Gerência',precificacao:'Precificação','fluxo-caixa':'Fluxo de Caixa',dre:'DRE — Resultado por Competência'};
+function go(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  $('s-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  $('tb-title').textContent=titles[id]||id;
+  const fn={dashboard:renderDash,agenda:renderAgenda,comanda:renderComanda,clientes:renderClientes,servicos:renderServicos,profissionais:renderProfs,estoque:renderEstoque,'venda-produto':renderVP,'venda-prof':renderVF,financeiro:renderFin,comissoes:renderComiss,relatorios:renderRel,acessos:renderAcessos,'meu-resumo':renderMeuResumo,configuracoes:renderConfig,'gestao-gerencia':renderGestaoGerencia,precificacao:renderPrecificacao,'fluxo-caixa':renderFluxoCaixa,dre:renderDRE};
+  fn[id]&&fn[id]();
+}
 function go(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
@@ -3529,7 +3776,7 @@ function coletarDados(){
     agendamentos:DB.agendamentos, comandas:DB.comandas, estoque:DB.estoque,
     financeiro:DB.financeiro, vendas_clientes:DB.vendas_clientes, vendas_profs:DB.vendas_profs,
     historico:DB.historico, bloqueios:DB.bloqueios, config:DB.config, master:DB.master, nextId:DB.nextId, gestao:DB.gestao,
-    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes, notificacoes:DB.notificacoes||[], custosProd:DB.custosProd||[],
+    antecipacoes:DB.antecipacoes, pgto_comissoes:DB.pgto_comissoes, notificacoes:DB.notificacoes||[], custosProd:DB.custosProd||[], fluxo:DB.fluxo||[], fluxoConfig:DB.fluxoConfig||{},
   };
 }
 
@@ -4660,6 +4907,402 @@ function renderSbUser(){
   const btnReset = document.getElementById('btn-reset-wrap');
   if(btnReset) btnReset.style.display = usuarioLogado.acesso==='master' ? 'block' : 'none';
 }
+
+// ══════════ FLUXO DE CAIXA ══════════
+let _fluxoAba = 'lancamentos';
+
+function renderFluxoCaixa(){
+  if(!DB.fluxo) DB.fluxo=[];
+  if(!DB.fluxoConfig) DB.fluxoConfig={tiposDesp:[],centrosCusto:[],nextIdTipo:1,nextIdCC:1,metaIndDireta:35,metaDireta:55,metaLucro:10};
+  if(!DB.fluxoConfig.tiposDesp) DB.fluxoConfig.tiposDesp=[];
+  if(!DB.fluxoConfig.centrosCusto) DB.fluxoConfig.centrosCusto=[];
+
+  // Popula filtro de meses
+  const meses = [...new Set(DB.fluxo.map(f=>f.data.slice(0,7)))].sort().reverse();
+  const selMes = $('fc-fil-mes');
+  if(selMes){
+    selMes.innerHTML='<option value="">Todos os meses</option>';
+    meses.forEach(m=>{
+      const [a,mo]=m.split('-');
+      const nomes=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      selMes.innerHTML+=`<option value="${m}">${nomes[parseInt(mo)-1]} ${a}</option>`;
+    });
+  }
+
+  // Popula seletor mensal
+  const selMesSel=$('fc-mes-sel');
+  if(selMesSel){
+    const ano=new Date().getFullYear();
+    const nomes=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    selMesSel.innerHTML='';
+    for(let m=0;m<12;m++){
+      const val=`${ano}-${String(m+1).padStart(2,'0')}`;
+      selMesSel.innerHTML+=`<option value="${val}" ${m===new Date().getMonth()?'selected':''}>${nomes[m]} ${ano}</option>`;
+    }
+  }
+
+  // Data padrão para diário
+  if($('fc-dia-sel') && !$('fc-dia-sel').value) $('fc-dia-sel').value=new Date().toISOString().slice(0,10);
+
+  switchFluxo(_fluxoAba, document.querySelector('#s-fluxo-caixa .tab.active')||document.querySelector('#s-fluxo-caixa .tab'));
+}
+
+function switchFluxo(aba, el){
+  _fluxoAba=aba;
+  document.querySelectorAll('#s-fluxo-caixa .tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  ['lancamentos','diario','mensal','config'].forEach(a=>{
+    const el=$('fluxo-'+a); if(el) el.style.display=a===aba?'block':'none';
+  });
+  const btnNovo=document.getElementById('btn-novo-lanc');
+  if(btnNovo) btnNovo.style.display=aba==='config'?'none':'';
+  if(aba==='lancamentos') renderFluxoLanc();
+  else if(aba==='diario') renderFluxoDiario();
+  else if(aba==='mensal') renderFluxoMensal();
+  else if(aba==='config') renderFluxoConfig();
+}
+
+function renderFluxoLanc(){
+  const filMes=$('fc-fil-mes')?.value||'';
+  const filTipo=$('fc-fil-tipo')?.value||'';
+  const filStatus=$('fc-fil-status')?.value||'';
+  let list=[...DB.fluxo];
+  if(filMes) list=list.filter(f=>f.data.startsWith(filMes));
+  if(filTipo) list=list.filter(f=>f.tipoCateg===filTipo);
+  if(filStatus) list=list.filter(f=>f.status===filStatus);
+  list.sort((a,b)=>b.data.localeCompare(a.data));
+
+  const totalPago=list.filter(f=>f.status==='pago').reduce((s,f)=>s+f.valor,0);
+  const totalAberto=list.filter(f=>f.status==='aberto').reduce((s,f)=>s+f.valor,0);
+
+  const FORMAS={dinheiro:'💵',banco:'🏦',pix:'⚡',cartao:'💳'};
+  $('tb-fluxo').innerHTML=list.length===0
+    ?'<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:24px">Nenhum lançamento encontrado</td></tr>'
+    :list.map(f=>`<tr>
+      <td>${fmtDate(f.data)}</td>
+      <td><strong>${f.desc}</strong></td>
+      <td><span class="badge ${f.tipoCateg==='indireta'?'badge-amber':'badge-blue'}">${f.tipoCateg==='indireta'?'Indireta':'Direta'}</span><div style="font-size:11px;color:var(--text3)">${f.catNome||'—'}</div></td>
+      <td style="font-size:12px">${f.ccNome||'—'}</td>
+      <td>${FORMAS[f.forma]||'—'} ${f.forma}</td>
+      <td style="font-weight:700;color:var(--danger)">${fmt(f.valor)}</td>
+      <td><span class="badge ${f.status==='pago'?'badge-green':'badge-amber'}">${f.status==='pago'?'✅ Pago':'⏳ Em aberto'}</span></td>
+      <td style="font-size:11px;color:var(--text3);max-width:120px">${f.obs||'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-xs" onclick="editarFluxo(${f.id})">✎</button>
+        <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirFluxo(${f.id})">🗑</button>
+        ${f.status==='aberto'?`<button class="btn btn-ghost btn-xs" style="color:var(--success)" onclick="pagarFluxo(${f.id})" title="Marcar como pago">✓</button>`:''}
+      </td>
+    </tr>`).join('');
+
+  $('fluxo-totais').innerHTML=`
+    <span>Total pago: <strong style="color:var(--danger)">${fmt(totalPago)}</strong></span>
+    <span>Em aberto: <strong style="color:var(--warn)">${fmt(totalAberto)}</strong></span>
+    <span>Total geral: <strong>${fmt(totalPago+totalAberto)}</strong></span>
+    <span style="margin-left:auto;color:var(--text3);font-size:11px">${list.length} lançamentos</span>`;
+}
+
+function renderFluxoDiario(){
+  const dia=$('fc-dia-sel')?.value||new Date().toISOString().slice(0,10);
+  const list=DB.fluxo.filter(f=>f.data===dia);
+  const totalDia=list.reduce((s,f)=>s+f.valor,0);
+  const pago=list.filter(f=>f.status==='pago').reduce((s,f)=>s+f.valor,0);
+  const aberto=list.filter(f=>f.status==='aberto').reduce((s,f)=>s+f.valor,0);
+  $('fc-dia-metrics').innerHTML=`
+    <div class="metric danger"><div class="metric-label">Total do dia</div><div class="metric-val" style="color:var(--danger)">${fmt(totalDia)}</div></div>
+    <div class="metric"><div class="metric-label">Pago</div><div class="metric-val" style="color:var(--success)">${fmt(pago)}</div></div>
+    <div class="metric warn"><div class="metric-label">Em aberto</div><div class="metric-val" style="color:var(--warn)">${fmt(aberto)}</div></div>`;
+  $('tb-fluxo-dia').innerHTML=list.length===0
+    ?'<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:24px">Nenhum lançamento neste dia</td></tr>'
+    :list.map(f=>`<tr>
+      <td><strong>${f.desc}</strong><div style="font-size:11px;color:var(--text3)">${f.catNome||''}</div></td>
+      <td><span class="badge ${f.tipoCateg==='indireta'?'badge-amber':'badge-blue'}">${f.tipoCateg==='indireta'?'Indireta':'Direta'}</span></td>
+      <td>${f.forma}</td>
+      <td style="font-weight:700;color:var(--danger)">${fmt(f.valor)}</td>
+      <td><span class="badge ${f.status==='pago'?'badge-green':'badge-amber'}">${f.status==='pago'?'Pago':'Em aberto'}</span></td>
+    </tr>`).join('');
+}
+
+function renderFluxoMensal(){
+  const mes=$('fc-mes-sel')?.value||new Date().toISOString().slice(0,7);
+  const list=DB.fluxo.filter(f=>f.data.startsWith(mes));
+  const total=list.reduce((s,f)=>s+f.valor,0);
+  const ind=list.filter(f=>f.tipoCateg==='indireta');
+  const dir=list.filter(f=>f.tipoCateg==='direta');
+  const totalInd=ind.reduce((s,f)=>s+f.valor,0);
+  const totalDir=dir.reduce((s,f)=>s+f.valor,0);
+  // Faturamento do mês (do histórico)
+  const fat=DB.historico.filter(h=>h.data.startsWith(mes)&&h.tipo==='Serviço').reduce((s,h)=>s+h.val,0);
+  $('fc-mes-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Faturamento</div><div class="metric-val" style="color:var(--success)">${fmt(fat)}</div></div>
+    <div class="metric danger"><div class="metric-label">Total despesas</div><div class="metric-val" style="color:var(--danger)">${fmt(total)}</div></div>
+    <div class="metric amber"><div class="metric-label">Desp. Indiretas</div><div class="metric-val">${fmt(totalInd)}</div><div class="metric-sub">${fat?((totalInd/fat)*100).toFixed(1)+'%':''}</div></div>
+    <div class="metric blue"><div class="metric-label">Desp. Diretas</div><div class="metric-val">${fmt(totalDir)}</div><div class="metric-sub">${fat?((totalDir/fat)*100).toFixed(1)+'%':''}</div></div>`;
+
+  // Por categoria
+  const porCatInd={};
+  ind.forEach(f=>{const k=f.catNome||'Outros';if(!porCatInd[k])porCatInd[k]=0;porCatInd[k]+=f.valor;});
+  const porCatDir={};
+  dir.forEach(f=>{const k=f.catNome||'Outros';if(!porCatDir[k])porCatDir[k]=0;porCatDir[k]+=f.valor;});
+
+  $('tb-fc-ind').innerHTML=Object.entries(porCatInd).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <tr><td>${k}</td><td style="font-weight:600;color:var(--danger)">${fmt(v)}</td><td style="font-size:12px;color:var(--text3)">${fat?((v/fat)*100).toFixed(1)+'%':''}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:12px">Nenhuma despesa indireta</td></tr>';
+
+  $('tb-fc-dir').innerHTML=Object.entries(porCatDir).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`
+    <tr><td>${k}</td><td style="font-weight:600;color:var(--danger)">${fmt(v)}</td><td style="font-size:12px;color:var(--text3)">${fat?((v/fat)*100).toFixed(1)+'%':''}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:12px">Nenhuma despesa direta</td></tr>';
+}
+
+function renderFluxoConfig(){
+  const cfg=DB.fluxoConfig;
+  $('meta-ind').value=cfg.metaIndDireta||35;
+  $('meta-dir').value=cfg.metaDireta||55;
+  $('meta-lucro-dre').value=cfg.metaLucro||10;
+
+  $('tb-tipos-desp').innerHTML=(cfg.tiposDesp||[]).map(t=>`<tr>
+    <td>${t.nome}</td>
+    <td><span class="badge ${t.tipo==='indireta'?'badge-amber':'badge-blue'}">${t.tipo==='indireta'?'Indireta':'Direta'}</span></td>
+    <td><button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirTipoDesp(${t.id})">🗑</button></td>
+  </tr>`).join('');
+
+  $('tb-cc').innerHTML=(cfg.centrosCusto||[]).map(c=>`<tr>
+    <td>${c.nome}</td>
+    <td><button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirCC(${c.id})">🗑</button></td>
+  </tr>`).join('');
+}
+
+function salvarMetasDRE(){
+  DB.fluxoConfig.metaIndDireta=parseFloat($('meta-ind').value)||35;
+  DB.fluxoConfig.metaDireta=parseFloat($('meta-dir').value)||55;
+  DB.fluxoConfig.metaLucro=parseFloat($('meta-lucro-dre').value)||10;
+  salvarDados();
+}
+
+function openModalFluxo(id=null){
+  $('fl-id').value=id||'';
+  $('m-fluxo-title').textContent=id?'Editar Lançamento':'Novo Lançamento';
+  if(!$('fl-data').value) $('fl-data').value=new Date().toISOString().slice(0,10);
+
+  // Popula tipos
+  const selTipo=$('fl-tipo-desp');
+  selTipo.innerHTML='<option value="">Selecione...</option>';
+  (DB.fluxoConfig?.tiposDesp||[]).forEach(t=>{
+    selTipo.innerHTML+=`<option value="${t.id}" data-categ="${t.tipo}">${t.nome} (${t.tipo==='indireta'?'Indireta':'Direta'})</option>`;
+  });
+
+  // Popula CC
+  const selCC=$('fl-cc');
+  selCC.innerHTML='<option value="">Sem centro</option>';
+  (DB.fluxoConfig?.centrosCusto||[]).forEach(c=>{
+    selCC.innerHTML+=`<option value="${c.id}">${c.nome}</option>`;
+  });
+
+  if(id){
+    const f=DB.fluxo.find(x=>x.id===id);
+    if(f){
+      $('fl-data').value=f.data;
+      $('fl-valor').value=f.valor;
+      $('fl-desc').value=f.desc;
+      $('fl-tipo-desp').value=f.tipoId||'';
+      $('fl-cc').value=f.ccId||'';
+      $('fl-forma').value=f.forma;
+      $('fl-status').value=f.status;
+      $('fl-obs').value=f.obs||'';
+    }
+  } else {
+    $('fl-valor').value='';$('fl-desc').value='';$('fl-obs').value='';
+    $('fl-status').value='pago';
+  }
+  openModal('m-fluxo');
+}
+
+function editarFluxo(id){ openModalFluxo(id); }
+
+function salvarFluxo(){
+  const desc=$('fl-desc').value.trim();
+  const valor=parseFloat($('fl-valor').value)||0;
+  const data=$('fl-data').value;
+  if(!desc||!valor||!data){alert('Preencha data, descrição e valor');return;}
+  const tipoId=parseInt($('fl-tipo-desp').value)||null;
+  const tipoObj=DB.fluxoConfig.tiposDesp.find(t=>t.id===tipoId);
+  const ccId=parseInt($('fl-cc').value)||null;
+  const ccObj=DB.fluxoConfig.centrosCusto.find(c=>c.id===ccId);
+  const obj={
+    data,desc,valor,
+    tipoId,catNome:tipoObj?.nome||'',tipoCateg:tipoObj?.tipo||'indireta',
+    ccId,ccNome:ccObj?.nome||'',
+    forma:$('fl-forma').value,
+    status:$('fl-status').value,
+    obs:$('fl-obs').value,
+  };
+  const id=parseInt($('fl-id').value);
+  if(id){Object.assign(DB.fluxo.find(x=>x.id===id),obj);}
+  else{if(!DB.nextId.fluxo)DB.nextId.fluxo=1;DB.fluxo.push({id:DB.nextId.fluxo++,...obj});}
+  salvarDados();closeModal('m-fluxo');renderFluxoLanc();
+}
+
+function excluirFluxo(id){
+  if(!confirm('Excluir este lançamento?'))return;
+  DB.fluxo=DB.fluxo.filter(x=>x.id!==id);
+  salvarDados();renderFluxoLanc();
+}
+
+function pagarFluxo(id){
+  const f=DB.fluxo.find(x=>x.id===id);
+  if(f){f.status='pago';salvarDados();renderFluxoLanc();}
+}
+
+function openModalTipoDesp(){$('td-nome').value='';$('td-id').value='';openModal('m-tipo-desp');}
+function salvarTipoDesp(){
+  const nome=$('td-nome').value.trim();if(!nome)return;
+  if(!DB.fluxoConfig.nextIdTipo)DB.fluxoConfig.nextIdTipo=1;
+  DB.fluxoConfig.tiposDesp.push({id:DB.fluxoConfig.nextIdTipo++,nome,tipo:$('td-tipo').value});
+  salvarDados();closeModal('m-tipo-desp');renderFluxoConfig();
+}
+function excluirTipoDesp(id){
+  if(!confirm('Excluir esta categoria?'))return;
+  DB.fluxoConfig.tiposDesp=DB.fluxoConfig.tiposDesp.filter(t=>t.id!==id);
+  salvarDados();renderFluxoConfig();
+}
+function openModalCC(){$('cc-nome').value='';$('cc-id').value='';openModal('m-cc');}
+function salvarCC(){
+  const nome=$('cc-nome').value.trim();if(!nome)return;
+  if(!DB.fluxoConfig.nextIdCC)DB.fluxoConfig.nextIdCC=1;
+  DB.fluxoConfig.centrosCusto.push({id:DB.fluxoConfig.nextIdCC++,nome});
+  salvarDados();closeModal('m-cc');renderFluxoConfig();
+}
+function excluirCC(id){
+  if(!confirm('Excluir este centro de custo?'))return;
+  DB.fluxoConfig.centrosCusto=DB.fluxoConfig.centrosCusto.filter(c=>c.id!==id);
+  salvarDados();renderFluxoConfig();
+}
+
+// ══════════ DRE ══════════
+function renderDRE(){
+  const cfg=DB.fluxoConfig||{};
+  $('dre-meta-ind').textContent=(cfg.metaIndDireta||35)+'%';
+  $('dre-meta-dir').textContent=(cfg.metaDireta||55)+'%';
+  $('dre-meta-lucro').textContent=(cfg.metaLucro||10)+'%';
+
+  // Popula ano
+  const anoSel=$('dre-ano');
+  const anos=[...new Set([
+    ...DB.historico.map(h=>h.data.slice(0,4)),
+    ...( DB.fluxo||[]).map(f=>f.data.slice(0,4)),
+    String(new Date().getFullYear())
+  ])].sort().reverse();
+  anoSel.innerHTML=anos.map(a=>`<option value="${a}">${a}</option>`).join('');
+  const ano=anoSel.value||anos[0]||String(new Date().getFullYear());
+
+  const meses=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const dados=meses.map((m,i)=>{
+    const mesStr=`${ano}-${String(i+1).padStart(2,'0')}`;
+    // Faturamento (receita bruta dos serviços)
+    const fat=DB.historico.filter(h=>h.data.startsWith(mesStr)&&h.tipo==='Serviço').reduce((s,h)=>s+h.val,0);
+    // Despesas indiretas do fluxo
+    const despInd=(DB.fluxo||[]).filter(f=>f.data.startsWith(mesStr)&&f.tipoCateg==='indireta').reduce((s,f)=>s+f.valor,0);
+    // Despesas diretas do fluxo (inclui comissões pagas)
+    const despDir=(DB.fluxo||[]).filter(f=>f.data.startsWith(mesStr)&&f.tipoCateg==='direta').reduce((s,f)=>s+f.valor,0);
+    // Comissões pagas no período
+    const comissoes=(DB.pgto_comissoes||[]).filter(p=>p.periodo&&p.periodo.startsWith(mesStr)).reduce((s,p)=>s+p.val,0);
+    // Taxa de cartão
+    const taxaCartao=DB.historico.filter(h=>h.data.startsWith(mesStr)&&h.tipo==='Serviço'&&h.descProf).reduce((s,h)=>s+h.val*(h.taxa||0)/100,0);
+    const totalDir=despDir+comissoes+taxaCartao;
+    const totalDesp=despInd+totalDir;
+    const lucro=fat-totalDesp;
+    return {mes:m,mesStr,fat,despInd,despDir:totalDir,totalDesp,lucro,comissoes,taxaCartao};
+  });
+
+  const totFat=dados.reduce((s,d)=>s+d.fat,0);
+  const totInd=dados.reduce((s,d)=>s+d.despInd,0);
+  const totDir=dados.reduce((s,d)=>s+d.despDir,0);
+  const totLucro=dados.reduce((s,d)=>s+d.lucro,0);
+
+  // Categorias indiretas
+  const catInd={};
+  (DB.fluxo||[]).filter(f=>f.data.startsWith(ano)&&f.tipoCateg==='indireta').forEach(f=>{
+    const k=f.catNome||'Outros';
+    if(!catInd[k]) catInd[k]=new Array(12).fill(0);
+    const m=parseInt(f.data.slice(5,7))-1;
+    catInd[k][m]+=f.valor;
+  });
+
+  // Categorias diretas
+  const catDir={};
+  (DB.fluxo||[]).filter(f=>f.data.startsWith(ano)&&f.tipoCateg==='direta').forEach(f=>{
+    const k=f.catNome||'Outros';
+    if(!catDir[k]) catDir[k]=new Array(12).fill(0);
+    const m=parseInt(f.data.slice(5,7))-1;
+    catDir[k][m]+=f.valor;
+  });
+
+  const colMes=dados.map(d=>`<th style="text-align:right;min-width:90px">${d.mes}</th>`).join('');
+  const colTot=`<th style="text-align:right;min-width:100px;background:var(--bg2)">Total</th>`;
+
+  function linha(label,vals,bold=false,color='',bg=''){
+    const tot=vals.reduce((s,v)=>s+v,0);
+    return `<tr style="background:${bg}">
+      <td style="font-weight:${bold?700:400};${color?'color:'+color:''};padding:6px 10px;min-width:200px">${label}</td>
+      ${vals.map(v=>`<td style="text-align:right;padding:6px 8px;font-weight:${bold?700:400};${color?'color:'+color:''}">${v?fmt(v):'-'}</td>`).join('')}
+      <td style="text-align:right;padding:6px 8px;font-weight:700;${color?'color:'+color:''};background:var(--bg2)">${fmt(tot)}</td>
+    </tr>`;
+  }
+
+  function linhaPct(label,vals,fats,meta,bold=false){
+    const tot=vals.reduce((s,v)=>s+v,0);
+    const totFat2=fats.reduce((s,v)=>s+v,0);
+    const pct=totFat2?tot/totFat2*100:0;
+    const ok=pct<=meta;
+    return `<tr>
+      <td style="padding:6px 10px;font-weight:${bold?700:400}">${label} (%)</td>
+      ${vals.map((v,i)=>{const p=fats[i]?v/fats[i]*100:0;const c=p>meta?'var(--danger)':'var(--success)';return `<td style="text-align:right;padding:6px 8px;color:${c};font-size:12px">${fats[i]?p.toFixed(1)+'%':'0%'}</td>`}).join('')}
+      <td style="text-align:right;padding:6px 8px;font-weight:700;color:${ok?'var(--success)':'var(--danger)'};background:var(--bg2)">${pct.toFixed(1)}%</td>
+    </tr>`;
+  }
+
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:12.5px">
+    <thead><tr style="background:var(--bg2)">
+      <th style="text-align:left;padding:8px 10px;min-width:200px">Plano de Contas</th>
+      ${colMes}${colTot}
+    </tr></thead>
+    <tbody>`;
+
+  // RECEITA BRUTA
+  html+=`<tr style="background:#2d7a5622"><td colspan="${14}" style="padding:6px 10px;font-weight:700;color:var(--success)">💰 Receita Bruta</td></tr>`;
+  html+=linha('Faturamento (Serviços)',dados.map(d=>d.fat),true,'var(--success)');
+
+  // DESPESAS INDIRETAS
+  html+=`<tr style="background:#f39c1222"><td colspan="${14}" style="padding:8px 10px;font-weight:700;color:#a06000">📋 Despesas Indiretas</td></tr>`;
+  Object.entries(catInd).forEach(([k,v])=>{ html+=linha(k,v); });
+  html+=linha('Total Despesas Indiretas',dados.map(d=>d.despInd),true,'var(--warn)');
+  html+=linhaPct('Desp. Indireta',dados.map(d=>d.despInd),dados.map(d=>d.fat),cfg.metaIndDireta||35,true);
+
+  // DESPESAS DIRETAS
+  html+=`<tr style="background:#2060a022"><td colspan="${14}" style="padding:8px 10px;font-weight:700;color:#2060a0">🔵 Despesas Diretas</td></tr>`;
+  Object.entries(catDir).forEach(([k,v])=>{ html+=linha(k,v); });
+  // Comissões do sistema
+  const arrComiss=dados.map(d=>d.comissoes);
+  if(arrComiss.some(v=>v>0)) html+=linha('Comissões (pagas)',arrComiss);
+  const arrTaxa=dados.map(d=>d.taxaCartao);
+  if(arrTaxa.some(v=>v>0)) html+=linha('Taxa de Cartão',arrTaxa);
+  html+=linha('Total Despesas Diretas',dados.map(d=>d.despDir),true,'#2060a0');
+  html+=linhaPct('Desp. Direta',dados.map(d=>d.despDir),dados.map(d=>d.fat),cfg.metaDireta||55,true);
+
+  // RESULTADO
+  html+=`<tr style="background:var(--bg2)"><td colspan="${14}" style="padding:8px 10px;font-weight:700">📊 Resultado</td></tr>`;
+  html+=linha('Resultado Operacional',dados.map(d=>d.lucro),true,totLucro>=0?'var(--success)':'var(--danger)','rgba(45,122,86,.05)');
+  html+=linhaPct('Resultado (%)',dados.map(d=>d.lucro),dados.map(d=>d.fat),cfg.metaLucro||10,true);
+
+  // PONTO DE EQUILÍBRIO
+  html+=`<tr style="background:var(--bg2)"><td colspan="${14}" style="padding:8px 10px;font-weight:700">⚖ Ponto de Equilíbrio</td></tr>`;
+  const peVals=dados.map(d=>{
+    const pct=d.fat?d.despDir/d.fat:0;
+    return d.despInd>0&&pct<1?d.despInd/(1-pct):0;
+  });
+  html+=linha('Ponto de Equilíbrio (PE)',peVals,true);
+
+  html+=`</tbody></table>`;
+  $('dre-corpo').innerHTML=html;
+}
+
 function exportarBackup(){
   const dados={...coletarDados(),_versao:'2.0',_data:new Date().toLocaleString('pt-BR'),_sistema:'BelezaPro'};
   const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});
