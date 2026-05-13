@@ -891,7 +891,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
         </div>
         <div class="tw">
           <table>
-            <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th>Nota fiscal</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Nota fiscal</th><th>Status</th><th></th></tr></thead>
             <tbody id="gg-compras-lista"></tbody>
           </table>
         </div>
@@ -4190,12 +4190,18 @@ function renderGGCompras(){
   const isMaster = usuarioLogado?.acesso==='master';
   const compras = (DB.gestao.compras||[]).filter(c=>c.data.startsWith(mes));
   const total = compras.reduce((s,c)=>s+c.valor,0);
+
+  // Totais por categoria
+  const porCateg={};
+  compras.forEach(c=>{const k=c.categNome||'Outros';if(!porCateg[k])porCateg[k]=0;porCateg[k]+=c.valor;});
+
   $('gg-compras-lista').innerHTML = compras.length===0
-    ? `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:24px">Nenhuma compra registrada.</td></tr>`
+    ? `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:24px">Nenhuma compra registrada.</td></tr>`
     : compras.map(c=>`
       <tr>
         <td>${fmtDate(c.data)}</td>
         <td><strong>${c.desc}</strong>${c.obs?`<div style="font-size:11px;color:var(--text3)">${c.obs}</div>`:''}</td>
+        <td><span class="badge badge-gray" style="font-size:11px">${c.categNome||'—'}</span></td>
         <td style="font-weight:700">${fmt(c.valor)}</td>
         <td>${c.nf
           ? `<a href="${c.nf}" target="_blank" style="color:var(--info);font-size:12px">📄 Ver NF</a>`
@@ -4203,13 +4209,20 @@ function renderGGCompras(){
         <td><span class="badge ${c.status==='aprovado'?'badge-green':c.status==='pendente'?'badge-amber':'badge-red'}">${c.status==='aprovado'?'Aprovado':c.status==='pendente'?'Pendente':'Recusado'}</span></td>
         <td style="white-space:nowrap">
           ${isMaster?`
+            <button class="btn btn-ghost btn-xs" onclick="editarGG('compra',${c.id})">✎</button>
             <button class="btn btn-ghost btn-xs" style="color:var(--success)" onclick="statusCompra(${c.id},'aprovado')">✓</button>
             <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="statusCompra(${c.id},'recusado')">✕</button>
             <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirGG('compra',${c.id})">🗑</button>
           `:`<button class="btn btn-ghost btn-xs" onclick="editarGG('compra',${c.id})">✎</button>`}
         </td>
       </tr>`).join('')
-    + `<tr style="background:var(--bg)"><td colspan="2" style="font-weight:700;text-align:right">Total do mês</td><td style="font-weight:700;color:var(--rose)">${fmt(total)}</td><td colspan="3"></td></tr>`;
+    + `<tr style="background:var(--bg)">
+        <td colspan="3" style="font-weight:700;text-align:right;font-size:12px;color:var(--text2)">
+          ${Object.entries(porCateg).map(([k,v])=>`${k}: <strong>${fmt(v)}</strong>`).join(' &nbsp;|&nbsp; ')}
+        </td>
+        <td style="font-weight:700;color:var(--rose)">${fmt(total)}</td>
+        <td colspan="3" style="font-weight:700;text-align:left;color:var(--text3)">Total do mês</td>
+       </tr>`;
 }
 
 function statusCompra(id, status){
@@ -4301,6 +4314,14 @@ function openModalGG(tipo, id=null){
     const c=id?DB.gestao.compras.find(x=>x.id===id):{};
     body=`
       <div class="fg"><label class="fl">Descrição *</label><input type="text" class="fc" id="gg-titulo" value="${c.desc||''}" placeholder="Ex: Produtos Wella"></div>
+      <div class="fg"><label class="fl">Categoria *</label>
+        <select class="fc" id="gg-categ">
+          <option value="produto_descartavel" ${(c.categ||'')==='produto_descartavel'?'selected':''}>🧴 Produto / Descartável</option>
+          <option value="higiene" ${(c.categ||'')==='higiene'?'selected':''}>🧼 Produto de Higiene</option>
+          <option value="cafe" ${(c.categ||'')==='cafe'?'selected':''}>☕ Produto de Café</option>
+          <option value="outros" ${(c.categ||'')==='outros'?'selected':''}>📦 Outros</option>
+        </select>
+      </div>
       <div class="fr c2">
         <div class="fg"><label class="fl">Data *</label><input type="date" class="fc" id="gg-data" value="${c.data||new Date().toISOString().slice(0,10)}"></div>
         <div class="fg"><label class="fl">Valor (R$) *</label><input type="number" class="fc" id="gg-valor" step="0.01" value="${c.valor||''}" placeholder="0,00"></div>
@@ -4332,7 +4353,9 @@ function salvarGG(){
     closeModal('m-gg'); salvarDados(); renderGGTarefas();
   } else if(_ggTipo==='compra'){
     const desc=$('gg-titulo').value.trim(); if(!desc)return;
-    const obj={desc,data:$('gg-data').value,valor:parseFloat($('gg-valor').value)||0,nf:$('gg-nf').value.trim(),obs:$('gg-obs').value,status:'pendente'};
+    const categMap={'produto_descartavel':'🧴 Produto/Descartável','higiene':'🧼 Higiene','cafe':'☕ Café','outros':'📦 Outros'};
+    const categ=$('gg-categ').value||'outros';
+    const obj={desc,categ,categNome:categMap[categ]||'Outros',data:$('gg-data').value,valor:parseFloat($('gg-valor').value)||0,nf:$('gg-nf').value.trim(),obs:$('gg-obs').value,status:'pendente'};
     if(_ggEditId){ Object.assign(DB.gestao.compras.find(x=>x.id===_ggEditId),obj); }
     else { DB.gestao.compras.push({id:DB.nextId.compra++,...obj}); }
     closeModal('m-gg'); salvarDados(); renderGGCompras();
