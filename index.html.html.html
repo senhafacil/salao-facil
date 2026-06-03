@@ -4095,7 +4095,9 @@ function renderGGAba(){
 // ── METAS ──
 function renderGGMetas(){
   const mes = ggMesAtual();
-  const metas = (DB.gestao.metas||[]).filter(m=>m.mes===mes);
+  if(!DB.gestao) DB.gestao={metas:[],tarefas:[],compras:[],msgs:[],infos:{}};
+  if(!DB.gestao.metas) DB.gestao.metas=[];
+  const metas = DB.gestao.metas.filter(m=>m.mes===mes);
   const isMaster = usuarioLogado?.acesso==='master';
   if(metas.length===0){
     $('gg-metas-lista').innerHTML=`<div style="padding:24px;text-align:center;color:var(--text3)">Nenhuma meta cadastrada para este mês.</div>`;
@@ -4339,10 +4341,19 @@ function editarGG(tipo,id){ openModalGG(tipo,id); }
 function salvarGG(){
   const mes=ggMesAtual();
   if(!DB.gestao) DB.gestao={metas:[],tarefas:[],compras:[],msgs:[]};
+  if(!DB.gestao.metas) DB.gestao.metas=[];
+  if(!DB.gestao.tarefas) DB.gestao.tarefas=[];
+  if(!DB.gestao.compras) DB.gestao.compras=[];
+  if(!DB.nextId.meta) DB.nextId.meta=1;
+  if(!DB.nextId.tar) DB.nextId.tar=1;
+  if(!DB.nextId.compra) DB.nextId.compra=1;
+
   if(_ggTipo==='meta'){
-    const titulo=$('gg-titulo').value.trim(); if(!titulo)return;
-    const obj={titulo,tipo:$('gg-tipo-meta').value,valor:parseFloat($('gg-valor').value)||0,atual:parseFloat($('gg-atual').value)||0,obs:$('gg-obs').value,mes};
-    if(_ggEditId){ Object.assign(DB.gestao.metas.find(x=>x.id===_ggEditId),obj); }
+    const tituloEl=$('gg-titulo'); if(!tituloEl)return;
+    const titulo=tituloEl.value.trim(); if(!titulo){alert('Informe o título da meta');return;}
+    const tipoMeta=$('gg-tipo-meta')?.value||'valor';
+    const obj={titulo,tipo:tipoMeta,valor:parseFloat($('gg-valor')?.value)||0,atual:parseFloat($('gg-atual')?.value)||0,obs:$('gg-obs')?.value||'',mes};
+    if(_ggEditId){ Object.assign(DB.gestao.metas.find(x=>x.id===_ggEditId)||{},obj); }
     else { DB.gestao.metas.push({id:DB.nextId.meta++,...obj}); }
     closeModal('m-gg'); salvarDados(); renderGGMetas();
   } else if(_ggTipo==='tarefa'){
