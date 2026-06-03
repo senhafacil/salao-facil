@@ -865,7 +865,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     <div id="gg-metas">
       <div class="card" style="margin-bottom:16px">
         <div class="card-header"><span class="card-title">🎯 Metas do mês</span>
-          ${usuarioLogado?.acesso==='master'?'<button class="btn btn-primary btn-sm" onclick="openModalGG(\'meta\')">+ Nova meta</button>':''}
+          <button class="btn btn-primary btn-sm" id="btn-nova-meta" onclick="openModalGG('meta')" style="display:none">+ Nova meta</button>
         </div>
         <div id="gg-metas-lista" style="padding:4px 0"></div>
       </div>
@@ -873,12 +873,8 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
     <!-- TAREFAS -->
     <div id="gg-tarefas" style="display:none">
-      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" onclick="filtrarTarefas('todas',this)" id="tf-todas">Todas</button>
-        <button class="btn btn-outline btn-sm" onclick="filtrarTarefas('diaria',this)" id="tf-diaria">📅 Diárias</button>
-        <button class="btn btn-outline btn-sm" onclick="filtrarTarefas('semanal',this)" id="tf-semanal">📆 Semanais</button>
-        <button class="btn btn-outline btn-sm" onclick="filtrarTarefas('mensal',this)" id="tf-mensal">🗓 Mensais</button>
-        <span id="btn-nova-tarefa" style="margin-left:auto"></span>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;justify-content:flex-end">
+        <span id="btn-nova-tarefa" style="display:flex;gap:8px"></span>
       </div>
       <div id="gg-tarefas-lista"></div>
     </div>
@@ -4099,6 +4095,9 @@ function renderGGMetas(){
   if(!DB.gestao.metas) DB.gestao.metas=[];
   const metas = DB.gestao.metas.filter(m=>m.mes===mes);
   const isMaster = usuarioLogado?.acesso==='master';
+  // Mostra botão só pro master
+  const btnNovaMeta = document.getElementById('btn-nova-meta');
+  if(btnNovaMeta) btnNovaMeta.style.display = isMaster ? '' : 'none';
   if(metas.length===0){
     $('gg-metas-lista').innerHTML=`<div style="padding:24px;text-align:center;color:var(--text3)">Nenhuma meta cadastrada para este mês.</div>`;
     return;
@@ -4145,38 +4144,52 @@ function filtrarTarefas(f, el){
 function renderGGTarefas(){
   const mes = ggMesAtual();
   const isMaster = usuarioLogado?.acesso==='master';
-  // Botão nova tarefa só pro master
+
+  // Botões só pro master
   const btnNova = document.getElementById('btn-nova-tarefa');
-  if(btnNova) btnNova.innerHTML = isMaster ? '<button class="btn btn-primary btn-sm" onclick="openModalGG(\'tarefa\')">+ Nova tarefa</button>' : '';
-  let tarefas = (DB.gestao.tarefas||[]).filter(t=>t.mes===mes);
-  if(_ggTarefaFiltro!=='todas') tarefas = tarefas.filter(t=>t.freq===_ggTarefaFiltro);
-  const grupos = {diaria:'📅 Diárias', semanal:'📆 Semanais', mensal:'🗓 Mensais'};
-  const freqs = _ggTarefaFiltro==='todas' ? ['diaria','semanal','mensal'] : [_ggTarefaFiltro];
-  let html = '';
-  freqs.forEach(freq=>{
-    const lista = tarefas.filter(t=>t.freq===freq);
-    if(lista.length===0) return;
-    html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);padding:10px 0 6px">${grupos[freq]}</div>`;
-    lista.forEach(t=>{
-      const done = t.feita;
-      html += `<div class="card" style="margin-bottom:8px;opacity:${done?0.6:1}">
-        <div class="card-body" style="padding:12px 16px;display:flex;align-items:flex-start;gap:12px">
-          <input type="checkbox" style="margin-top:2px;width:16px;height:16px;cursor:pointer;flex-shrink:0" ${done?'checked':''} onchange="toggleTarefa(${t.id},this.checked)">
-          <div style="flex:1">
-            <div style="font-weight:600;${done?'text-decoration:line-through;color:var(--text3)':''}">${t.titulo}</div>
-            ${t.desc?`<div style="font-size:12px;color:var(--text3);margin-top:2px">${t.desc}</div>`:''}
-            ${t.prazo?`<div style="font-size:11px;color:var(--text2);margin-top:4px">📅 Prazo: ${fmtDate(t.prazo)}</div>`:''}
-          </div>
-          <span class="badge ${t.prior==='alta'?'badge-red':t.prior==='media'?'badge-amber':'badge-gray'}">${t.prior==='alta'?'Alta':t.prior==='media'?'Média':'Normal'}</span>
-          ${isMaster?`<div style="display:flex;gap:4px">
-            <button class="btn btn-ghost btn-xs" onclick="editarGG('tarefa',${t.id})">✎</button>
-            <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirGG('tarefa',${t.id})">🗑</button>
-          </div>`:''}
-        </div>
-      </div>`;
+  if(btnNova) btnNova.innerHTML = isMaster
+    ? `<button class="btn btn-outline btn-sm" onclick="replicarTarefas()">📋 Replicar mês anterior</button>
+       <button class="btn btn-primary btn-sm" onclick="openModalGG('tarefa')">+ Nova tarefa</button>`
+    : '';
+
+  // Ordena por data de execução (sem data vai para o fim)
+  let tarefas = (DB.gestao.tarefas||[])
+    .filter(t=>t.mes===mes)
+    .sort((a,b)=>{
+      if(!a.prazo && !b.prazo) return 0;
+      if(!a.prazo) return 1;
+      if(!b.prazo) return -1;
+      return a.prazo.localeCompare(b.prazo);
     });
+
+  let html = '';
+  tarefas.forEach(t=>{
+    const done = t.feita;
+    const freqLabel = {diaria:'📅 Diária', semanal:'📆 Semanal', mensal:'🗓 Mensal'}[t.freq]||'';
+    html += `<div class="card" style="margin-bottom:8px;opacity:${done?0.6:1}">
+      <div class="card-body" style="padding:12px 16px;display:flex;align-items:flex-start;gap:12px">
+        <input type="checkbox" style="margin-top:2px;width:16px;height:16px;cursor:pointer;flex-shrink:0" ${done?'checked':''} onchange="toggleTarefa(${t.id},this.checked)">
+        <div style="flex:1">
+          <div style="font-weight:600;${done?'text-decoration:line-through;color:var(--text3)':''}">${t.titulo}</div>
+          ${t.desc?`<div style="font-size:12px;color:var(--text3);margin-top:2px">${t.desc}</div>`:''}
+          <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+            ${t.prazo?`<span style="font-size:11px;color:var(--text2)">📅 ${fmtDate(t.prazo)}</span>`:''}
+            ${freqLabel?`<span style="font-size:11px;color:var(--text3)">${freqLabel}</span>`:''}
+          </div>
+        </div>
+        <span class="badge ${t.prior==='alta'?'badge-red':t.prior==='media'?'badge-amber':'badge-gray'}">${t.prior==='alta'?'Alta':t.prior==='media'?'Média':'Normal'}</span>
+        ${isMaster?`<div style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-xs" onclick="editarGG('tarefa',${t.id})">✎</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirGG('tarefa',${t.id})">🗑</button>
+        </div>`:''}
+      </div>
+    </div>`;
   });
-  if(!html) html = `<div style="text-align:center;color:var(--text3);padding:32px">Nenhuma tarefa cadastrada.</div>`;
+
+  if(!html) html = `<div style="text-align:center;color:var(--text3);padding:32px">
+    Nenhuma tarefa cadastrada.
+    ${isMaster?'<br><br><button class="btn btn-outline btn-sm" onclick="replicarTarefas()">📋 Replicar do mês anterior</button>':''}
+  </div>`;
   $('gg-tarefas-lista').innerHTML = html;
 }
 
@@ -4184,6 +4197,62 @@ function toggleTarefa(id, checked){
   const t = DB.gestao.tarefas.find(x=>x.id===id);
   if(t){ t.feita=checked; t.feitaEm=checked?new Date().toISOString().slice(0,10):null; }
   salvarDados(); renderGGTarefas();
+}
+
+function replicarTarefas(){
+  const mesAtual = ggMesAtual();
+  const [ano, mes] = mesAtual.split('-').map(Number);
+
+  // Calcula mês anterior
+  const mesAntD = new Date(ano, mes-2, 1);
+  const mesAnt = `${mesAntD.getFullYear()}-${String(mesAntD.getMonth()+1).padStart(2,'0')}`;
+  const nomesMes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const nomeMesAnt = `${nomesMes[mesAntD.getMonth()]} ${mesAntD.getFullYear()}`;
+  const nomeMesAtual = `${nomesMes[mes-1]} ${ano}`;
+
+  const tarefasAnt = (DB.gestao.tarefas||[]).filter(t=>t.mes===mesAnt);
+  const tarefasAtuais = (DB.gestao.tarefas||[]).filter(t=>t.mes===mesAtual);
+
+  if(tarefasAnt.length===0){
+    alert(`Não há tarefas cadastradas em ${nomeMesAnt} para replicar.`);
+    return;
+  }
+
+  if(tarefasAtuais.length>0){
+    if(!confirm(`${nomeMesAtual} já tem ${tarefasAtuais.length} tarefa(s).\n\nDeseja adicionar as ${tarefasAnt.length} tarefas de ${nomeMesAnt} sem apagar as existentes?`)) return;
+  } else {
+    if(!confirm(`Replicar ${tarefasAnt.length} tarefa(s) de ${nomeMesAnt} para ${nomeMesAtual}?\n\nAs datas serão copiadas — você pode editar cada uma depois.`)) return;
+  }
+
+  if(!DB.nextId.tar) DB.nextId.tar=1;
+
+  tarefasAnt.forEach(t=>{
+    DB.gestao.tarefas.push({
+      ...t,
+      id: DB.nextId.tar++,
+      mes: mesAtual,
+      feita: false,
+      feitaEm: null,
+      // Mantém a data mas ajusta para o mês atual se possível
+      prazo: t.prazo ? ajustarDataParaMes(t.prazo, mesAtual) : '',
+    });
+  });
+
+  salvarDados();
+  renderGGTarefas();
+  alert(`✅ ${tarefasAnt.length} tarefa(s) replicada(s) para ${nomeMesAtual}!\n\nRevise as datas de execução e faça os ajustes necessários.`);
+}
+
+function ajustarDataParaMes(dataOriginal, mesAlvo){
+  // Tenta manter o mesmo dia do mês, ajustando para o mês alvo
+  if(!dataOriginal) return '';
+  const d = new Date(dataOriginal + 'T12:00:00');
+  const dia = d.getDate();
+  const [anoAlvo, mesAlvoN] = mesAlvo.split('-').map(Number);
+  // Verifica quantos dias tem o mês alvo
+  const diasNoMes = new Date(anoAlvo, mesAlvoN, 0).getDate();
+  const diaFinal = Math.min(dia, diasNoMes);
+  return `${mesAlvo}-${String(diaFinal).padStart(2,'0')}`;
 }
 
 // ── COMPRAS ──
@@ -4311,7 +4380,7 @@ function openModalGG(tipo, id=null){
           </select>
         </div>
       </div>
-      <div class="fg"><label class="fl">Prazo</label><input type="date" class="fc" id="gg-prazo" value="${t.prazo||''}"></div>`;
+      <div class="fg"><label class="fl">📅 Data de execução</label><input type="date" class="fc" id="gg-prazo" value="${t.prazo||''}"><div style="font-size:11px;color:var(--text3);margin-top:3px">Dia que esta tarefa deve ser realizada</div></div>`;
   } else if(tipo==='compra'){
     const c=id?DB.gestao.compras.find(x=>x.id===id):{};
     body=`
