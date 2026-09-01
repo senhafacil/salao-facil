@@ -2450,9 +2450,9 @@ function renderAgendaGrid(){
                  '12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30',
                  '16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
 
-  // Pega profissionais ativos
+  // Pega profissionais ativos com acesso 'profissional' apenas (gerente e recepção não aparecem)
   const isProfissional = usuarioLogado?.acesso==='profissional';
-  let profs = DB.profissionais.filter(p=>p.ativo!==false);
+  let profs = DB.profissionais.filter(p=>p.ativo!==false && p.acesso==='profissional');
 
   // Profissional só vê a si mesmo
   if(isProfissional && usuarioLogado?.id){
