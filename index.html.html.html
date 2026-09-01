@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -183,9 +184,14 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
 /* ── AGENDA GRID ── */
 .ag-grid{display:grid;border:1px solid var(--bg3);border-radius:var(--radius-lg);overflow:hidden;background:var(--white)}
-.ag-hdr{background:var(--bg);padding:9px 8px;text-align:center;font-size:11px;font-weight:700;color:var(--text2);border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg3)}
-.ag-hour{padding:6px 8px;font-size:11px;color:var(--text3);text-align:right;border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg3);background:var(--bg)}
-.ag-cell{border-right:1px solid var(--bg2);border-bottom:1px solid var(--bg2);min-height:42px;padding:3px;cursor:pointer}
+.ag-hdr{background:var(--bg);padding:10px 8px;text-align:center;font-size:12px;font-weight:700;color:var(--text2);border-right:1px solid var(--bg3);border-bottom:2px solid var(--bg3)}
+.ag-hdr-prof{background:var(--bg);padding:10px 6px;text-align:center;border-right:1px solid var(--bg3);border-bottom:2px solid var(--rose);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:130px}
+.ag-hdr-prof .av-ag{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+.ag-hdr-prof .nome-ag{font-size:12px;font-weight:700;color:var(--text)}
+.ag-hdr-prof .esp-ag{font-size:10px;color:var(--text3)}
+.ag-hour{padding:8px 8px;font-size:11px;color:var(--text3);text-align:right;border-right:1px solid var(--bg3);border-bottom:1px solid var(--bg2);background:var(--bg);white-space:nowrap;min-width:54px}
+.ag-cell{border-right:1px solid var(--bg2);border-bottom:1px solid var(--bg2);min-height:56px;padding:3px;cursor:pointer;vertical-align:top}
+.ag-cell:hover{background:rgba(181,96,110,.04)}
 .ag-cell:hover{background:rgba(181,96,110,.05)}
 .appt{border-radius:5px;padding:4px 7px;font-size:11px;margin-bottom:2px;cursor:pointer;border-left:4px solid transparent}
 .appt-name{font-weight:700;font-size:11.5px}
@@ -443,26 +449,37 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
   <!-- ══ AGENDA ══ -->
   <div id="s-agenda" class="section">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="btn btn-outline btn-sm" onclick="semana(-1)">‹</button>
-        <span style="font-weight:600;font-size:14px" id="lbl-semana"></span>
-        <button class="btn btn-outline btn-sm" onclick="semana(1)">›</button>
-        <button class="btn btn-ghost btn-sm" onclick="DB.semOff=0;renderAgenda()">Hoje</button>
+    <!-- Header da agenda -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="diaAnterior()">‹</button>
+        <div style="text-align:center;min-width:180px">
+          <div style="font-weight:700;font-size:16px" id="lbl-dia-nome"></div>
+          <div style="font-size:12px;color:var(--text2)" id="lbl-dia-data"></div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="diaProximo()">›</button>
+        <button class="btn btn-ghost btn-sm" onclick="DB.diaOff=0;renderAgenda()">Hoje</button>
       </div>
-      <button class="btn btn-primary" id="btn-novo-agend" onclick="openModal('m-agendamento');initModalAgend()">+ Novo agendamento</button>
-      <button class="btn btn-outline btn-sm" id="btn-bloquear-agend" style="color:var(--danger);border-color:var(--danger)" onclick="openModalBloqueio()">🔒 Bloquear horário</button>
-    </div>
-    <div class="card" style="margin-bottom:20px">
-      <div id="ag-grid-wrap" style="overflow-x:auto"><div class="ag-grid" id="ag-grid"></div></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 0;font-size:11px;color:var(--text2)">
-        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#c8ecd8;border-left:4px solid #1a7a40;margin-right:3px"></span>📅 Agendado</span>
-        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#bcd8f5;border-left:4px solid #1450a0;margin-right:3px"></span>✅ Confirmado</span>
-        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#fde8b0;border-left:4px solid #a06000;margin-right:3px"></span>💇 Em atendimento</span>
-        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#e0e0e0;border-left:4px solid #666;margin-right:3px"></span>✔ Concluído</span>
-        <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f5bcb5;border-left:4px solid #c0392b;margin-right:3px"></span>❌ Falta</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" id="btn-novo-agend" onclick="openModal('m-agendamento');initModalAgend()">+ Agendar</button>
+        <button class="btn btn-outline btn-sm" id="btn-bloquear-agend" style="color:var(--danger);border-color:var(--danger)" onclick="openModalBloqueio()">🔒 Bloquear</button>
       </div>
     </div>
+
+    <!-- Grade por profissional -->
+    <div class="card" style="margin-bottom:16px">
+      <div id="ag-grid-wrap" style="overflow-x:auto"></div>
+      <!-- Legenda -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 16px;font-size:11px;color:var(--text2);border-top:1px solid var(--bg2)">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c8ecd8;border-left:3px solid #1a7a40;margin-right:3px"></span>📅 Agendado</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#bcd8f5;border-left:3px solid #1450a0;margin-right:3px"></span>✅ Confirmado</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fde8b0;border-left:3px solid #a06000;margin-right:3px"></span>💇 Em atendimento</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e0e0e0;border-left:3px solid #666;margin-right:3px"></span>✔ Concluído</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f5bcb5;border-left:3px solid #c0392b;margin-right:3px"></span>❌ Falta</span>
+      </div>
+    </div>
+
+    <!-- Lista de agendamentos do dia -->
     <div class="card">
       <div class="card-header"><span class="card-title">Lista de agendamentos</span>
         <div style="display:flex;gap:8px">
@@ -470,7 +487,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
           <select class="fc" style="width:120px;padding:5px 10px" id="ag-fil-status" onchange="renderAgendaLista()"><option value="">Todos status</option><option>Confirmado</option><option>Pendente</option><option>Cancelado</option></select>
         </div>
       </div>
-      <div class="tw"><table><thead><tr><th>Data/Hora</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="ag-lista"></tbody></table></div>
+      <div class="tw"><table><thead><tr><th>Horário</th><th>Cliente</th><th>Serviço</th><th>Profissional</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody id="ag-lista"></tbody></table></div>
     </div>
   </div>
 
@@ -1977,6 +1994,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 // ══════════ DATABASE ══════════
 const DB = {
   semOff:0,
+  diaOff:0,
   cmdAtiva:null,
   pgto:{fc:null,vp:null,vf:null},
   band:{fc:null,vp:null,vf:null},
@@ -2399,85 +2417,130 @@ function renderAgenda(){
   renderAgendaGrid();
   renderAgendaLista();
 }
-function semana(d){DB.semOff+=d;renderAgendaGrid();}
-function getSemana(){
-  // Encontra a segunda-feira da semana atual
-  const hoje = new Date();
-  const diaSemana = hoje.getDay(); // 0=dom,1=seg...6=sab
-  const diffParaSeg = diaSemana === 0 ? -6 : 1 - diaSemana;
-  const seg = new Date(hoje);
-  seg.setDate(hoje.getDate() + diffParaSeg + DB.semOff * 7);
-  seg.setHours(12,0,0,0);
-  // Retorna Seg a Sab (6 dias)
-  return Array.from({length:6},(_,i)=>{const d=new Date(seg);d.setDate(seg.getDate()+i);return d});
+
+function getDiaAtual(){
+  const d = new Date();
+  d.setDate(d.getDate() + (DB.diaOff||0));
+  d.setHours(12,0,0,0);
+  return d;
 }
+
+function diaAnterior(){ DB.diaOff=(DB.diaOff||0)-1; renderAgendaGrid(); renderAgendaLista(); }
+function diaProximo(){  DB.diaOff=(DB.diaOff||0)+1; renderAgendaGrid(); renderAgendaLista(); }
+
+// Mantém semana() para compatibilidade mas redireciona para dia
+function semana(d){ DB.diaOff=(DB.diaOff||0)+(d*7); renderAgendaGrid(); renderAgendaLista(); }
+function getSemana(){ return [getDiaAtual()]; }
+
 function renderAgendaGrid(){
-  const dias_=getSemana();
-  const nms=['Seg','Ter','Qua','Qui','Sex','Sáb'];
-  const horas=['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
-  $('lbl-semana').textContent=`${dias_[0].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})} – ${dias_[5].toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'})}`;
-  let html=`<div class="ag-grid" style="grid-template-columns:54px repeat(6,1fr)">`;
-  html+='<div class="ag-hdr"></div>';
-  dias_.forEach((d,i)=>{
-    const ds=d.toISOString().slice(0,10);
-    const isSab=i===5;
-    html+=`<div class="ag-hdr" style="${isSab?'background:rgba(160,120,64,.1)':''}">${nms[i]} ${d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</div>`;
+  if(!DB.diaOff) DB.diaOff=0;
+  const dia = getDiaAtual();
+  const ds = dia.toISOString().slice(0,10);
+  const nomesDia = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const diaNome = nomesDia[dia.getDay()];
+  const diaFormatado = dia.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+
+  // Atualiza labels
+  const lblNome = document.getElementById('lbl-dia-nome');
+  const lblData = document.getElementById('lbl-dia-data');
+  if(lblNome) lblNome.textContent = diaNome;
+  if(lblData) lblData.textContent = diaFormatado;
+
+  const horas = ['08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+                 '12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30',
+                 '16:00','16:30','17:00','17:30','18:00','18:30','19:00'];
+
+  // Pega profissionais ativos
+  const isProfissional = usuarioLogado?.acesso==='profissional';
+  let profs = DB.profissionais.filter(p=>p.ativo!==false);
+
+  // Profissional só vê a si mesmo
+  if(isProfissional && usuarioLogado?.id){
+    profs = profs.filter(p=>p.id===usuarioLogado.id);
+  }
+
+  if(profs.length===0){
+    $('ag-grid-wrap').innerHTML='<div style="padding:32px;text-align:center;color:var(--text3)">Nenhum profissional cadastrado</div>';
+    return;
+  }
+
+  // Grid: coluna hora + 1 coluna por profissional
+  const nCols = profs.length + 1;
+  let html = `<div class="ag-grid" style="display:grid;grid-template-columns:54px repeat(${profs.length},minmax(140px,1fr))">`;
+
+  // Cabeçalho: célula vazia + profissionais
+  html += '<div class="ag-hour" style="background:var(--bg);border-bottom:2px solid var(--rose)"></div>';
+  profs.forEach(p=>{
+    const ini = initials(p.nome);
+    const cor = p.cor||'var(--rose)';
+    const totalHoje = DB.agendamentos.filter(a=>a.pid===p.id&&a.data===ds&&a.status!=='Cancelado').length;
+    html += `<div class="ag-hdr-prof">
+      <div class="av-ag" style="background:${cor}22;color:${cor}">${ini}</div>
+      <div class="nome-ag">${p.nome.split(' ')[0]}</div>
+      <div class="esp-ag">${p.esp||''}</div>
+      ${totalHoje>0?`<div style="background:var(--rose);color:#fff;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;margin-top:2px">${totalHoje} hoje</div>`:''}
+    </div>`;
   });
+
+  // Linhas de horário
   horas.forEach(h=>{
-    html+=`<div class="ag-hour">${h}</div>`;
-    dias_.forEach((d,di)=>{
-      const ds=d.toISOString().slice(0,10);
-      const isSab=di===5;
-      const ags=DB.agendamentos.filter(a=>a.data===ds&&a.hora===h&&a.status!=='Cancelado');
-      // Bloqueios de agenda para essa célula
-      const bloq=(DB.bloqueios||[]).filter(b=>b.data===ds&&b.hora===h);
-      const bgStyle=isSab?'background:rgba(160,120,64,.04)':'';
-      const isProfCell = usuarioLogado?.acesso==='profissional';
-      html+=`<div class="ag-cell" style="${bgStyle}${isProfCell?';cursor:default':''}" ${isProfCell?'':` onclick="openModal('m-agendamento');initModalAgend('${ds}','${h}')"`}>`;
+    html += `<div class="ag-hour">${h}</div>`;
+    profs.forEach(p=>{
+      const ags = DB.agendamentos.filter(a=>a.data===ds&&a.hora===h&&a.pid===p.id&&a.status!=='Cancelado');
+      const bloq = (DB.bloqueios||[]).filter(b=>b.data===ds&&b.hora===h&&b.pid===p.id);
+      const clickAction = !isProfissional ? `onclick="openModal('m-agendamento');initModalAgend('${ds}','${h}',${p.id})"` : '';
+      html += `<div class="ag-cell" ${isProfissional?'style="cursor:default"':''} ${clickAction}>`;
+
       bloq.forEach(b=>{
-        html+=`<div class="appt" style="background:var(--danger-l);border-left-color:var(--danger);cursor:default" onclick="event.stopPropagation()">
-          <div class="appt-name" style="color:var(--danger)">🔒 ${pNome(b.pid)}</div>
-          <div class="appt-svc" style="color:var(--danger)">${b.motivo}</div>
+        html += `<div class="appt" style="background:#fdecea;border-left:3px solid var(--danger);cursor:default" onclick="event.stopPropagation()">
+          <div class="appt-name" style="color:var(--danger)">🔒 Bloqueado</div>
+          <div class="appt-svc" style="color:var(--danger)">${b.motivo||''}</div>
         </div>`;
       });
+
       ags.forEach(a=>{
-        // Verifica se tem comanda aberta para esse agendamento
         const cmdAberta = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
         const status = cmdAberta ? 'Atendimento' : a.status;
         const statusMap = {
-          'Pendente':    {cls:'appt-pendente',   emoji:'📅', cor:'#2d7a56'},
-          'Confirmado':  {cls:'appt-confirmado', emoji:'✅', cor:'#2060a0'},
-          'Atendimento': {cls:'appt-atendimento',emoji:'💇', cor:'#a07840'},
-          'Concluído':   {cls:'appt-concluido',  emoji:'✔',  cor:'#888'},
-          'Falta':       {cls:'appt-falta',      emoji:'❌', cor:'#c0392b'},
+          'Pendente':    {bg:'#c8ecd8',border:'#1a7a40',cor:'#0d4a25',emoji:'📅'},
+          'Confirmado':  {bg:'#bcd8f5',border:'#1450a0',cor:'#0a2d60',emoji:'✅'},
+          'Atendimento': {bg:'#fde8b0',border:'#a06000',cor:'#6b3f00',emoji:'💇'},
+          'Concluído':   {bg:'#e0e0e0',border:'#666',   cor:'#333',   emoji:'✔'},
+          'Falta':       {bg:'#f5bcb5',border:'#c0392b',cor:'#7a0f00',emoji:'❌'},
         };
         const st = statusMap[status]||statusMap['Pendente'];
-        const clickHandler = !isProfCell ? `onclick="event.stopPropagation();abrirComandaDoAgendamento(${a.id})"` : '';
-        html+=`<div class="appt ${st.cls}" ${clickHandler}>
-          <div class="appt-name" style="color:${st.cor}">${st.emoji} ${cNome(a.cid).split(' ')[0]}</div>
-          <div class="appt-svc" style="color:${st.cor}">${sNome(a.sid)} · ${pNome(a.pid).split(' ')[0]}</div>
+        const click = !isProfissional ? `onclick="event.stopPropagation();abrirComandaDoAgendamento(${a.id})"` : '';
+        const clienteNome = cNome(a.cid);
+        const svcNome = sNome(a.sid);
+        html += `<div class="appt" style="background:${st.bg};border-left:3px solid ${st.border};color:${st.cor};cursor:pointer" ${click}>
+          <div class="appt-name" style="color:${st.cor};font-weight:700;font-size:11.5px">${st.emoji} ${clienteNome.split(' ')[0]} ${clienteNome.split(' ')[1]||''}</div>
+          <div class="appt-svc" style="color:${st.cor};font-size:10px">${svcNome}</div>
         </div>`;
       });
-      html+='</div>';
+
+      html += '</div>';
     });
   });
-  html+='</div>';
-  $('ag-grid-wrap').innerHTML=html;
+
+  html += '</div>';
+  $('ag-grid-wrap').innerHTML = html;
 }
 function renderAgendaLista(){
   const isProfissional = usuarioLogado?.acesso==='profissional';
   const fp=$('ag-fil-prof')?.value||'';
   const fs=$('ag-fil-status')?.value||'';
-  let list=[...DB.agendamentos].sort((a,b)=>(a.data+a.hora).localeCompare(b.data+b.hora));
-  // Profissional só vê seus próprios agendamentos
-  if(isProfissional && usuarioLogado?.id){
-    list=list.filter(a=>a.pid==usuarioLogado.id);
-  }
-  if(fp)list=list.filter(a=>a.pid==fp);
-  if(fs)list=list.filter(a=>a.status===fs);
-  $('ag-lista').innerHTML=list.map(a=>`
+  const ds = getDiaAtual().toISOString().slice(0,10);
+  let list=[...DB.agendamentos]
+    .filter(a=>a.data===ds)
+    .sort((a,b)=>a.hora.localeCompare(b.hora));
+  if(isProfissional && usuarioLogado?.id) list=list.filter(a=>a.pid==usuarioLogado.id);
+  if(fp) list=list.filter(a=>a.pid==fp);
+  if(fs) list=list.filter(a=>a.status===fs);
+  $('ag-lista').innerHTML=list.length===0
+    ?'<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:20px">Nenhum agendamento para este dia</td></tr>'
+    :list.map(a=>`
     <tr>
-      <td><strong>${fmtDate(a.data)}</strong> ${a.hora}</td>
+      <td><strong>${a.hora}</strong></td>
       <td>${cNome(a.cid)}</td>
       <td>${sNome(a.sid)}</td>
       <td>${pNome(a.pid)}</td>
@@ -2488,21 +2551,26 @@ function renderAgendaLista(){
           <button class="btn btn-ghost btn-xs" onclick="agStatus(${a.id},'Confirmado')" title="Confirmar">✅</button>
           <button class="btn btn-ghost btn-xs" onclick="abrirComandaDoAgendamento(${a.id})" title="Abrir comanda">💇</button>
           <button class="btn btn-ghost btn-xs" style="color:var(--warn)" onclick="agStatus(${a.id},'Falta')" title="Falta">❌</button>
-          <button class="btn btn-ghost btn-xs" style="color:var(--text3)" onclick="agStatus(${a.id},'Cancelado')" title="Cancelou (avisou)">🚫</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--text3)" onclick="agStatus(${a.id},'Cancelado')" title="Cancelou">🚫</button>
         `}
       </td>
     </tr>`).join('');
 }
-function agStatus(id,s){const a=DB.agendamentos.find(x=>x.id===id);if(a){a.status=s;renderAgendaLista();}}
 
-function initModalAgend(data='',hora=''){
+function agStatus(id,s){
+  const a=DB.agendamentos.find(x=>x.id===id);
+  if(a){ a.status=s; salvarDados(); renderAgendaLista(); renderAgendaGrid(); }
+}
+
+function initModalAgend(data='',hora='',pid=null){
   populateSel('ag-cliente',DB.clientes,'id','nome');
-  populateSel('ag-prof',DB.profissionais.filter(p=>p.ativo),'id','nome');
+  populateSel('ag-prof',DB.profissionais.filter(p=>p.ativo!==false),'id','nome');
   filterServsByProf();
-  $('ag-data').value=data||'2026-04-18';
+  $('ag-data').value=data||getDiaAtual().toISOString().slice(0,10);
   $('ag-hora').value=hora||'09:00';
   $('ag-obs').value='';
   $('m-agendamento').dataset.editId='';
+  if(pid){ const sel=$('ag-prof'); if(sel){sel.value=pid;filterServsByProf();} }
 }
 function filterServsByProf(){
   const pid=parseInt($('ag-prof')?.value);
