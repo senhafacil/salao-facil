@@ -2618,25 +2618,38 @@ function abrirComanda(){
 function abrirComandaDoAgendamento(agId){
   const a = DB.agendamentos.find(x=>x.id===agId);
   if(!a) return;
-  // Verifica se já tem comanda aberta para esse cliente
-  let cmd = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
+
+  // Se já está concluído, avisa
+  if(a.status==='Concluído'){
+    alert('Este atendimento já foi concluído.');
+    return;
+  }
+
+  // Verifica se já tem comanda aberta para esse agendamento
+  let cmd = DB.comandas.find(c=>c.aberta&&c.agId===agId);
+
+  // Se não tem, verifica pelo cliente
+  if(!cmd) cmd = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
+
   if(!cmd){
     // Cria nova comanda com serviço já incluído
     const s = DB.servicos.find(x=>x.id===a.sid);
     const itens = s ? [{tipo:'svc',refId:a.sid,pid:a.pid,preco:s.preco,nome:s.nome}] : [];
-    cmd = {id:DB.nextId.cmd++,cid:a.cid,aberta:true,itens,pgto:null,band:null,abertura:new Date().toLocaleString('pt-BR'),fechamento:null,agId};
+    if(!DB.nextId.cmd) DB.nextId.cmd=1;
+    cmd = {id:DB.nextId.cmd++,cid:a.cid,aberta:true,itens,pgto:null,band:null,
+           abertura:new Date().toLocaleString('pt-BR'),fechamento:null,agId};
     DB.comandas.push(cmd);
-    // Atualiza status do agendamento para Em atendimento
     a.status='Atendimento';
-    salvarDados();
-    // Notifica profissional
+    salvarDados(true);
     notificarProfissional(a);
   }
-  // Navega para comanda e abre
-  go('comanda', document.querySelector('.nb[onclick*="comanda"]'));
-  setTimeout(()=>verComanda(cmd.id), 100);
+
   updateNbCmd();
   renderAgendaGrid();
+
+  // Abre direto o modal de fechar comanda
+  DB.cmdAtiva = cmd.id;
+  setTimeout(()=>abrirModalFechar(cmd.id), 100);
 }
 
 function notificarProfissional(agendamento){
@@ -5938,4 +5951,3 @@ iniciarSistema();
 </script>
 </body>
 </html>
-
