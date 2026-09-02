@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -2754,12 +2755,12 @@ function abrirModalFechar(id){
 function selMeioPgto(el, meioId){
   $('fc-pay-opts').querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('sel'));
   el.classList.add('sel');
-  const m = (DB.config.meiosPgto||[]).find(x=>x.id===meioId);
-  if(!m)return;
+  const meios = (DB.config?.meiosPgto)||[];
+  const m = meios.find(x=>x.id===meioId);
+  if(!m){ DB.pgto.fc=el.textContent.trim(); DB.meioSel={nome:el.textContent.trim(),taxa:0}; return; }
   DB.pgto.fc = m.nome;
   DB.band.fc = m.bandeira||null;
   DB.meioSel = m;
-  // Parcelas
   if(m.tipo==='cartao' && m.modalidade==='credito' && m.maxParc>1){
     const opts = Array.from({length:m.maxParc},(_,i)=>`<option value="${i+1}">${i+1}x</option>`).join('');
     $('fc-parcelas').innerHTML=opts;
@@ -2768,40 +2769,49 @@ function selMeioPgto(el, meioId){
     $('fc-parcelas-wrap').style.display='block';
     $('fc-parcelas').onchange=()=>{DB.parcelas.fc=parseInt($('fc-parcelas').value);};
   } else {
-    $('fc-parcelas-wrap').style.display='none';
+    if($('fc-parcelas-wrap')) $('fc-parcelas-wrap').style.display='none';
     DB.parcelas={fc:1};
   }
 }
 function fecharComanda(){
-  if(!DB.pgto.fc){alert('Selecione forma de pagamento');return;}
+  if(!DB.pgto.fc){alert('Selecione a forma de pagamento');return;}
   const c=DB.comandas.find(x=>x.id===DB.cmdAtiva);
-  const meio = DB.meioSel||{};
-  c.aberta=false; c.pgto=DB.pgto.fc; c.band=DB.band.fc;
+  if(!c){alert('Comanda não encontrada');return;}
+  const meio = DB.meioSel||{nome:DB.pgto.fc,taxa:0};
+  c.aberta=false;
+  c.pgto=DB.pgto.fc;
+  c.band=DB.band.fc||null;
   c.parcelas=DB.parcelas?.fc||1;
-  c.taxa=meio.taxa||0; c.descProf=meio.descProf||false;
+  c.taxa=meio.taxa||0;
+  c.descProf=meio.descProf||false;
   c.fechamento=new Date().toLocaleString('pt-BR');
-  const total=c.itens.reduce((s,i)=>s+i.preco,0);
+  const total=c.itens.reduce((s,i)=>s+(i.preco||0),0);
   const hoje=new Date().toISOString().slice(0,10);
-  DB.financeiro.push({id:DB.nextId.fin++,data:hoje,desc:`Comanda — ${cNome(c.cid)}`,cat:'Serviços',tipo:'entrada',val:total,pgto:DB.pgto.fc,band:DB.band.fc});
+  // Lança no financeiro
+  if(!DB.nextId.fin) DB.nextId.fin=1;
+  DB.financeiro.push({id:DB.nextId.fin++,data:hoje,desc:`Comanda — ${cNome(c.cid)}`,cat:'Serviços',tipo:'entrada',val:total,pgto:DB.pgto.fc,band:DB.band.fc||null});
+  // Lança no histórico
+  if(!DB.nextId.hist) DB.nextId.hist=1;
   c.itens.forEach(it=>{
     DB.historico.push({id:DB.nextId.hist++,cid:c.cid,data:hoje,tipo:it.tipo==='svc'?'Serviço':'Produto',
-      desc:it.nome,prof:it.tipo==='svc'?pNome(it.pid):'—',val:it.preco,
-      pgto:DB.pgto.fc,band:DB.band.fc,taxa:meio.taxa||0,descProf:meio.descProf||false,
+      desc:it.nome,prof:it.tipo==='svc'?pNome(it.pid):'—',val:it.preco||0,
+      pgto:DB.pgto.fc,band:DB.band.fc||null,taxa:meio.taxa||0,descProf:meio.descProf||false,
       parcelas:c.parcelas});
   });
   DB.meioSel=null;
-  // Atualiza status do agendamento vinculado para Concluído
+  // Atualiza status do agendamento
   if(c.agId){
     const ag=DB.agendamentos.find(x=>x.id===c.agId);
     if(ag) ag.status='Concluído';
   } else {
-    // Tenta achar agendamento do cliente com status Em atendimento ou Confirmado no dia de hoje
-    const hoje2=new Date().toISOString().slice(0,10);
-    const ag=DB.agendamentos.find(x=>x.cid===c.cid&&x.data===hoje2&&(x.status==='Atendimento'||x.status==='Confirmado'||x.status==='Pendente'));
+    const ag=DB.agendamentos.find(x=>x.cid===c.cid&&x.data===hoje&&(x.status==='Atendimento'||x.status==='Confirmado'||x.status==='Pendente'));
     if(ag) ag.status='Concluído';
   }
-  closeModal('m-fechar');renderComanda();updateNbCmd();salvarDados();
-  // Atualiza agenda se estiver visível
+  closeModal('m-fechar');
+  renderComanda();
+  updateNbCmd();
+  // Salva imediatamente (não espera o debounce)
+  salvarDados(true);
   if(document.getElementById('s-agenda')?.classList.contains('active')) renderAgendaGrid();
 }
 
@@ -3989,17 +3999,22 @@ function coletarDados(){
 
 // ══════════ SALVAR — nuvem + local ══════════
 let _saveTimer=null;
-function salvarDados(){
+function salvarDados(imediato=false){
   const dados = coletarDados();
   salvarLocal(dados);
   const st = document.getElementById('sb-save-status');
   if(st) st.textContent='⏳ Sincronizando...';
   clearTimeout(_saveTimer);
-  _saveTimer = setTimeout(async()=>{
+  const doSave = async()=>{
     const ok = await supaSet(dados);
     if(st){ st.textContent = ok ? '☁ Salvo na nuvem' : '⚠ Só local (sem internet)';
       setTimeout(()=>{ if(st) st.textContent='☁ Sincronizado'; },2500); }
-  },800);
+    return ok;
+  };
+  if(imediato) return doSave();
+  return new Promise(resolve=>{
+    _saveTimer = setTimeout(()=>doSave().then(resolve),800);
+  });
 }
 
 // ══════════ CARREGAR — nuvem com fallback local ══════════
@@ -5923,3 +5938,4 @@ iniciarSistema();
 </script>
 </body>
 </html>
+
