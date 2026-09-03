@@ -1470,12 +1470,12 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
 <!-- Fechar comanda -->
 <div class="mo" id="m-fechar">
-  <div class="modal">
+  <div class="modal" style="max-width:620px">
     <div class="mh"><span class="mt" id="m-fechar-title">Fechar Comanda</span><button class="xbtn" onclick="closeModal('m-fechar')">×</button></div>
-    <div class="mb">
+    <div class="mb" style="max-height:70vh;overflow-y:auto">
       <div id="fc-itens"></div>
       <div class="dv"></div>
-      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;margin-bottom:18px"><span>Total</span><span id="fc-total" style="color:var(--rose)">R$ 0,00</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:700;margin-bottom:18px;padding:10px;background:var(--rose-l);border-radius:8px"><span>Total</span><span id="fc-total" style="color:var(--rose)">R$ 0,00</span></div>
       <div class="fg"><label class="fl">Forma de pagamento *</label>
         <div id="fc-pay-opts" style="display:flex;flex-wrap:wrap;gap:8px"></div>
       </div>
@@ -2752,17 +2752,107 @@ function abrirModalFechar(id){
   DB.cmdAtiva=id; DB.pgto.fc=null; DB.band.fc=null; DB.parcelas={fc:1};
   const c=DB.comandas.find(x=>x.id===id);
   if(!c){alert('Comanda não encontrada');return;}
-  $('m-fechar-title').textContent='Fechar Comanda — '+cNome(c.cid);
-  $('fc-itens').innerHTML=c.itens.map(it=>`
-    <div class="ci"><div><div style="font-weight:600">${it.nome}</div><div style="font-size:11px;color:var(--text3)">${it.tipo==='svc'?pNome(it.pid):'Produto'}</div></div><span style="font-weight:700">${fmt(it.preco)}</span></div>`).join('');
-  $('fc-total').textContent=fmt(c.itens.reduce((s,i)=>s+i.preco,0));
+  $('m-fechar-title').textContent='Comanda — '+cNome(c.cid);
+  renderItensComanda(id);
   const meios = DB.config?.meiosPgto||[];
   const ICONES = {dinheiro:'💵',pix:'⚡',cartao:'💳',outro:'📋'};
   $('fc-pay-opts').innerHTML = meios.length>0
     ? meios.map(m=>`<button class="pay-btn" onclick="selMeioPgto(this,${m.id})">${ICONES[m.tipo]||'📋'} ${m.nome}</button>`).join('')
-    : '<div style="color:var(--text3);font-size:12px">Configure meios de pagamento em Configurações</div>';
+    : `<button class="pay-btn" onclick="selPgtoSimples(this,'Pix')">⚡ Pix</button>
+       <button class="pay-btn" onclick="selPgtoSimples(this,'Dinheiro')">💵 Dinheiro</button>
+       <button class="pay-btn" onclick="selPgtoSimples(this,'Débito')">💳 Débito</button>
+       <button class="pay-btn" onclick="selPgtoSimples(this,'Crédito')">💳 Crédito</button>`;
   if($('fc-parcelas-wrap')) $('fc-parcelas-wrap').style.display='none';
   openModal('m-fechar');
+}
+
+function selPgtoSimples(el, nome){
+  $('fc-pay-opts').querySelectorAll('.pay-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  DB.pgto.fc=nome; DB.meioSel={nome,taxa:0};
+}
+
+function renderItensComanda(id){
+  const c=DB.comandas.find(x=>x.id===id);
+  if(!c) return;
+  const total=c.itens.reduce((s,i)=>s+(parseFloat(i.preco)||0),0);
+
+  $('fc-itens').innerHTML = c.itens.map((it,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2)">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:13px">${it.nome}</div>
+        <div style="font-size:11px;color:var(--text3)">${it.tipo==='svc'?pNome(it.pid):'Produto'}</div>
+      </div>
+      <input type="number" value="${it.preco}" step="0.01" min="0"
+        style="width:90px;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:13px;font-weight:700;text-align:right"
+        onchange="editarItemComanda(${id},${i},this.value)">
+      <button onclick="removerItemComanda(${id},${i})" style="background:none;border:none;cursor:pointer;color:var(--danger);font-size:18px;padding:0 4px">×</button>
+    </div>`).join('');
+
+  // Área de adicionar serviço
+  $('fc-itens').innerHTML += `
+    <div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:8px;border:1.5px dashed var(--border)">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">+ Adicionar serviço</div>
+      <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:6px;align-items:end">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">SERVIÇO</div>
+          <select class="fc" id="fc-add-svc" style="padding:6px 8px;font-size:12px" onchange="preencherProfSvc()">
+            <option value="">Selecione...</option>
+            ${DB.servicos.map(s=>`<option value="${s.id}" data-preco="${s.preco}">${s.nome}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">PROFISSIONAL</div>
+          <select class="fc" id="fc-add-prof" style="padding:6px 8px;font-size:12px">
+            <option value="">Selecione...</option>
+            ${DB.profissionais.filter(p=>p.ativo!==false&&p.acesso==='profissional').map(p=>`<option value="${p.id}">${p.nome.split(' ')[0]}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">VALOR (R$)</div>
+          <input type="number" id="fc-add-val" class="fc" step="0.01" placeholder="0,00" style="padding:6px 8px;font-size:12px">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="adicionarItemComanda(${id})" style="height:34px">+</button>
+      </div>
+    </div>`;
+
+  $('fc-total').textContent = fmt(total);
+}
+
+function preencherProfSvc(){
+  const sel = document.getElementById('fc-add-svc');
+  const preco = sel.options[sel.selectedIndex]?.dataset?.preco;
+  if(preco) document.getElementById('fc-add-val').value = parseFloat(preco).toFixed(2);
+}
+
+function adicionarItemComanda(cmdId){
+  const sid = parseInt(document.getElementById('fc-add-svc').value);
+  const pid = parseInt(document.getElementById('fc-add-prof').value);
+  const val = parseFloat(document.getElementById('fc-add-val').value)||0;
+  if(!sid){alert('Selecione o serviço');return;}
+  if(!pid){alert('Selecione o profissional');return;}
+  if(!val){alert('Informe o valor');return;}
+  const s = DB.servicos.find(x=>x.id===sid);
+  const c = DB.comandas.find(x=>x.id===cmdId);
+  if(!c||!s) return;
+  c.itens.push({tipo:'svc',refId:sid,pid,preco:val,nome:s.nome});
+  renderItensComanda(cmdId);
+}
+
+function editarItemComanda(cmdId, idx, val){
+  const c = DB.comandas.find(x=>x.id===cmdId);
+  if(!c) return;
+  c.itens[idx].preco = parseFloat(val)||0;
+  const total = c.itens.reduce((s,i)=>s+(parseFloat(i.preco)||0),0);
+  $('fc-total').textContent = fmt(total);
+}
+
+function removerItemComanda(cmdId, idx){
+  const c = DB.comandas.find(x=>x.id===cmdId);
+  if(!c) return;
+  if(c.itens.length===1){alert('A comanda precisa ter pelo menos 1 serviço');return;}
+  c.itens.splice(idx,1);
+  renderItensComanda(cmdId);
 }
 
 function selMeioPgto(el, meioId){
