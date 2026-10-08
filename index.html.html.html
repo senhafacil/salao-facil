@@ -471,12 +471,12 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     <div class="card" style="margin-bottom:16px">
       <div id="ag-grid-wrap" style="overflow-x:auto"></div>
       <!-- Legenda -->
-      <div style="display:flex;gap:12px;flex-wrap:wrap;padding:8px 16px;font-size:11px;color:var(--text2);border-top:1px solid var(--bg2)">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c8ecd8;border-left:3px solid #1a7a40;margin-right:3px"></span>📅 Agendado</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#bcd8f5;border-left:3px solid #1450a0;margin-right:3px"></span>✅ Confirmado</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#fde8b0;border-left:3px solid #a06000;margin-right:3px"></span>💇 Em atendimento</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#e0e0e0;border-left:3px solid #666;margin-right:3px"></span>✔ Concluído</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#f5bcb5;border-left:3px solid #c0392b;margin-right:3px"></span>❌ Falta</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;padding:10px 16px;font-size:11.5px;font-weight:600;border-top:1px solid var(--bg2)">
+        <span style="display:flex;align-items:center;gap:5px;background:#a8dfc0;border:1.5px solid #1a7a40;color:#0d4a25;border-radius:6px;padding:3px 8px">📅 Agendado</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#8ec4f0;border:1.5px solid #1450a0;color:#0a2d60;border-radius:6px;padding:3px 8px">✅ Confirmado</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#fbd07a;border:1.5px solid #a06000;color:#6b3f00;border-radius:6px;padding:3px 8px">💇 Em atendimento</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#c8c8c8;border:1.5px solid #666;color:#333;border-radius:6px;padding:3px 8px">✔ Concluído</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#f09088;border:1.5px solid #c0392b;color:#7a0f00;border-radius:6px;padding:3px 8px">❌ Falta</span>
       </div>
     </div>
 
@@ -2659,31 +2659,34 @@ function abrirComandaDoAgendamento(agId){
     return;
   }
 
-  // Verifica se já tem comanda aberta para esse agendamento
-  let cmd = DB.comandas.find(c=>c.aberta&&c.agId===agId);
-
-  // Se não tem, verifica pelo cliente
-  if(!cmd) cmd = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
+  // Verifica se já tem comanda aberta para esse cliente
+  let cmd = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
 
   if(!cmd){
-    // Cria nova comanda com serviço já incluído
-    const s = DB.servicos.find(x=>x.id===a.sid);
-    const itens = s ? [{tipo:'svc',refId:a.sid,pid:a.pid,preco:s.preco,nome:s.nome}] : [];
+    // Pega TODOS os agendamentos do cliente neste dia (não cancelados)
+    const ds = a.data;
+    const agsDoDia = DB.agendamentos.filter(ag=>ag.cid===a.cid&&ag.data===ds&&ag.status!=='Cancelado'&&ag.status!=='Falta');
+    // Monta itens com todos os serviços agendados
+    const itens = agsDoDia.map(ag=>{
+      const s = DB.servicos.find(x=>x.id===ag.sid);
+      return s ? {tipo:'svc',refId:ag.sid,pid:ag.pid,preco:s.preco,nome:s.nome} : null;
+    }).filter(Boolean);
     if(!DB.nextId.cmd) DB.nextId.cmd=1;
     cmd = {id:DB.nextId.cmd++,cid:a.cid,aberta:true,itens,pgto:null,band:null,
-           abertura:new Date().toLocaleString('pt-BR'),fechamento:null,agId};
+           abertura:new Date().toLocaleString('pt-BR'),fechamento:null};
     DB.comandas.push(cmd);
-    a.status='Atendimento';
+    // Marca todos os agendamentos do dia como Atendimento
+    agsDoDia.forEach(ag=>{ ag.status='Atendimento'; notificarProfissional(ag); });
     salvarDados(true);
-    notificarProfissional(a);
   }
 
   updateNbCmd();
   renderAgendaGrid();
 
-  // Abre direto o modal de fechar comanda
-  DB.cmdAtiva = cmd.id;
-  setTimeout(()=>abrirModalFechar(cmd.id), 100);
+  // Navega para a aba Comanda e abre a comanda
+  const btnComanda = document.querySelector('.nb[onclick*="comanda"]');
+  if(btnComanda) go('comanda', btnComanda);
+  setTimeout(()=>verComanda(cmd.id), 100);
 }
 
 function notificarProfissional(agendamento){
