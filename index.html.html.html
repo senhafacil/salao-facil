@@ -1324,6 +1324,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     <div class="tabs" style="margin-bottom:20px">
       <button class="tab active" onclick="switchCfg('pgto',this)">💳 Meios de Pagamento</button>
       <button class="tab" onclick="switchCfg('rel',this)">📊 Faturamento por Profissional</button>
+      <button class="tab" onclick="switchCfg('perm',this)">🔐 Permissões</button>
     </div>
 
     <!-- TAB: Meios de Pagamento -->
@@ -1341,6 +1342,39 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
             <thead><tr><th>Nome</th><th>Tipo</th><th>Bandeira</th><th>Modalidade</th><th>Máx. parcelas</th><th>Taxa (%)</th><th>Desc. do prof.?</th><th></th></tr></thead>
             <tbody id="tb-meios"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Permissões -->
+    <div id="cfg-perm" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🔐 Permissões por nível de acesso</span>
+        </div>
+        <div style="padding:20px 24px">
+          <div style="margin-bottom:20px">
+            <div style="font-weight:600;font-size:14px;margin-bottom:4px">Excluir comanda</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Quem pode excluir comandas sem precisar fechá-las primeiro</div>
+            <div style="display:flex;flex-direction:column;gap:10px" id="perm-excluir-comanda">
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" value="master" onchange="salvarPermissao('excluirComanda',this)" style="width:16px;height:16px;accent-color:var(--rose)">
+                <span><strong>Master</strong> <span style="color:var(--text3);font-size:12px">— Administrador</span></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" value="gerencia" onchange="salvarPermissao('excluirComanda',this)" style="width:16px;height:16px;accent-color:var(--rose)">
+                <span><strong>Gerência</strong></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" value="recepcao" onchange="salvarPermissao('excluirComanda',this)" style="width:16px;height:16px;accent-color:var(--rose)">
+                <span><strong>Recepção</strong></span>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+                <input type="checkbox" value="profissional" onchange="salvarPermissao('excluirComanda',this)" style="width:16px;height:16px;accent-color:var(--rose)">
+                <span><strong>Profissional</strong></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2677,6 +2711,7 @@ function verComanda(id){
       <div class="card-header">
         <span class="card-title">Comanda — ${cNome(c.cid)}</span>
         <button class="btn btn-outline btn-sm" onclick="openAddItem(${id})">+ Adicionar</button>
+        ${temPermissao('excluirComanda')?`<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="excluirComanda(${id})" title="Excluir comanda">🗑</button>`:''}
       </div>
       <div style="padding:16px 22px">
         ${c.itens.map((it,i)=>`
@@ -2875,6 +2910,15 @@ function selMeioPgto(el, meioId){
     if($('fc-parcelas-wrap')) $('fc-parcelas-wrap').style.display='none';
     DB.parcelas={fc:1};
   }
+}
+function excluirComanda(id){
+  const c=DB.comandas.find(x=>x.id===id);
+  if(!c) return;
+  if(!confirm(`Excluir comanda de ${cNome(c.cid)}?\n\nEssa ação não pode ser desfeita.`)) return;
+  DB.comandas=DB.comandas.filter(x=>x.id!==id);
+  $('cmd-panel').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text3)"><div style="font-size:48px;margin-bottom:12px">📋</div><div style="font-size:14px">Selecione uma comanda</div></div>';
+  salvarDados(true);renderComanda();
+  if(typeof updateNbCmd==='function') updateNbCmd();
 }
 function fecharComanda(){
   if(!DB.pgto.fc){alert('Selecione a forma de pagamento');return;}
@@ -4243,9 +4287,36 @@ function descProf(pgto, band){
 function switchCfg(aba, el){
   document.querySelectorAll('#s-configuracoes .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
-  $('cfg-pgto').style.display = aba==='pgto'?'block':'none';
-  $('cfg-rel').style.display  = aba==='rel' ?'block':'none';
-  if(aba==='rel') renderRelProf();
+  $('cfg-pgto').style.display  = aba==='pgto' ?'block':'none';
+  $('cfg-rel').style.display   = aba==='rel'  ?'block':'none';
+  $('cfg-perm').style.display  = aba==='perm' ?'block':'none';
+  if(aba==='rel')  renderRelProf();
+  if(aba==='perm') renderPermissoes();
+}
+
+function renderPermissoes(){
+  if(!DB.config.permissoes) DB.config.permissoes={};
+  const perm = DB.config.permissoes.excluirComanda || ['master'];
+  document.querySelectorAll('#perm-excluir-comanda input').forEach(cb=>{
+    cb.checked = perm.includes(cb.value);
+  });
+}
+
+function salvarPermissao(acao, cb){
+  if(!DB.config.permissoes) DB.config.permissoes={};
+  let atual = DB.config.permissoes[acao] || ['master'];
+  if(cb.checked){
+    if(!atual.includes(cb.value)) atual.push(cb.value);
+  } else {
+    atual = atual.filter(v=>v!==cb.value);
+  }
+  DB.config.permissoes[acao] = atual;
+  salvarDados(true);
+}
+
+function temPermissao(acao){
+  const perm = DB.config?.permissoes?.[acao] || ['master'];
+  return perm.includes(usuarioLogado?.acesso);
 }
 
 function renderConfig(){
