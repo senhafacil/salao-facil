@@ -471,12 +471,13 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
     <div class="card" style="margin-bottom:16px">
       <div id="ag-grid-wrap" style="overflow-x:auto"></div>
       <!-- Legenda -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap;padding:10px 16px;font-size:11.5px;font-weight:600;border-top:1px solid var(--bg2)">
-        <span style="display:flex;align-items:center;gap:5px;background:#a8dfc0;border:1.5px solid #1a7a40;color:#0d4a25;border-radius:6px;padding:3px 8px">📅 Agendado</span>
-        <span style="display:flex;align-items:center;gap:5px;background:#8ec4f0;border:1.5px solid #1450a0;color:#0a2d60;border-radius:6px;padding:3px 8px">✅ Confirmado</span>
-        <span style="display:flex;align-items:center;gap:5px;background:#fbd07a;border:1.5px solid #a06000;color:#6b3f00;border-radius:6px;padding:3px 8px">💇 Em atendimento</span>
-        <span style="display:flex;align-items:center;gap:5px;background:#c8c8c8;border:1.5px solid #666;color:#333;border-radius:6px;padding:3px 8px">✔ Concluído</span>
-        <span style="display:flex;align-items:center;gap:5px;background:#f09088;border:1.5px solid #c0392b;color:#7a0f00;border-radius:6px;padding:3px 8px">❌ Falta</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 16px;font-size:11.5px;font-weight:600;border-top:1px solid var(--bg2)">
+        <span style="display:flex;align-items:center;gap:5px;background:#ffe0b2;border:1.5px solid #e65100;color:#7f3000;border-radius:6px;padding:3px 8px">📅 Agendado</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#c8f0d0;border:1.5px solid #1a7a40;color:#0d4a25;border-radius:6px;padding:3px 8px">✅ Confirmado</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#b3e0ff;border:1.5px solid #0077cc;color:#003d6b;border-radius:6px;padding:3px 8px">💇 Em atendimento</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#1a3a6b;border:1.5px solid #0a1f3d;color:#fff;border-radius:6px;padding:3px 8px">✔ Concluído</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#ffcdd2;border:1.5px solid #c0392b;color:#7a0000;border-radius:6px;padding:3px 8px">❌ Falta</span>
+        <span style="display:flex;align-items:center;gap:5px;background:#e0e0e0;border:1.5px solid #888;color:#444;border-radius:6px;padding:3px 8px">🚫 Cancelado</span>
       </div>
     </div>
 
@@ -2345,8 +2346,15 @@ const initials=n=>n.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
 const dias=d=>d?Math.floor((new Date()-new Date(d+'T12:00'))/86400000):999;
 
 function sbadge(s){
-  const m={Confirmado:'green',Pendente:'amber',Cancelado:'red'};
-  return `<span class="badge badge-${m[s]||'gray'}">${s}</span>`;
+  const m={
+    Confirmado: 'style="background:#c8f0d0;color:#0d4a25;border:1px solid #1a7a40"',
+    Pendente:   'style="background:#ffe0b2;color:#7f3000;border:1px solid #e65100"',
+    Atendimento:'style="background:#b3e0ff;color:#003d6b;border:1px solid #0077cc"',
+    Concluído:  'style="background:#1a3a6b;color:#fff;border:1px solid #0a1f3d"',
+    Falta:      'style="background:#ffcdd2;color:#7a0000;border:1px solid #c0392b"',
+    Cancelado:  'style="background:#e0e0e0;color:#444;border:1px solid #888"',
+  };
+  return `<span class="badge" ${m[s]||''}>${s||'Pendente'}</span>`;
 }
 function openModal(id){$(id).classList.add('open')}
 function closeModal(id){$(id).classList.remove('open')}
@@ -2537,14 +2545,15 @@ function renderAgendaGrid(){
         const cmdAberta = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
         const status = cmdAberta ? 'Atendimento' : a.status;
         const statusMap = {
-          'Pendente':    {bg:'#c8ecd8',border:'#1a7a40',cor:'#0d4a25',emoji:'📅'},
-          'Confirmado':  {bg:'#bcd8f5',border:'#1450a0',cor:'#0a2d60',emoji:'✅'},
-          'Atendimento': {bg:'#fde8b0',border:'#a06000',cor:'#6b3f00',emoji:'💇'},
-          'Concluído':   {bg:'#e0e0e0',border:'#666',   cor:'#333',   emoji:'✔'},
-          'Falta':       {bg:'#f5bcb5',border:'#c0392b',cor:'#7a0f00',emoji:'❌'},
+          'Pendente':    {bg:'#ffe0b2',border:'#e65100',cor:'#7f3000',emoji:'📅'},
+          'Confirmado':  {bg:'#c8f0d0',border:'#1a7a40',cor:'#0d4a25',emoji:'✅'},
+          'Atendimento': {bg:'#b3e0ff',border:'#0077cc',cor:'#003d6b',emoji:'💇'},
+          'Concluído':   {bg:'#1a3a6b',border:'#0a1f3d',cor:'#ffffff',emoji:'✔'},
+          'Falta':       {bg:'#ffcdd2',border:'#c0392b',cor:'#7a0000',emoji:'❌'},
+          'Cancelado':   {bg:'#e0e0e0',border:'#888',   cor:'#444',   emoji:'🚫'},
         };
         const st = statusMap[status]||statusMap['Pendente'];
-        const click = !isProfissional ? `onclick="event.stopPropagation();abrirComandaDoAgendamento(${a.id})"` : '';
+        const click = !isProfissional ? `onclick="event.stopPropagation();confirmarAbrirComanda(${a.id})"` : '';
         const clienteNome = cNome(a.cid);
         const svcNome = sNome(a.sid);
         html += `<div class="appt" style="background:${st.bg};border-left:3px solid ${st.border};color:${st.cor};cursor:pointer" ${click}>
@@ -2583,10 +2592,10 @@ function renderAgendaLista(){
       <td>${sbadge(a.status)}</td>
       <td style="white-space:nowrap">
         ${isProfissional?'<span style="font-size:11px;color:var(--text3)">Somente leitura</span>':`
-          <button class="btn btn-ghost btn-xs" onclick="agStatus(${a.id},'Confirmado')" title="Confirmar">✅</button>
-          <button class="btn btn-ghost btn-xs" onclick="abrirComandaDoAgendamento(${a.id})" title="Abrir comanda">💇</button>
-          <button class="btn btn-ghost btn-xs" style="color:var(--warn)" onclick="agStatus(${a.id},'Falta')" title="Falta">❌</button>
-          <button class="btn btn-ghost btn-xs" style="color:var(--text3)" onclick="agStatus(${a.id},'Cancelado')" title="Cancelou">🚫</button>
+          <button class="btn btn-ghost btn-xs" style="color:#1a7a40" onclick="agStatus(${a.id},'Confirmado')" title="Confirmar presença">✅</button>
+          <button class="btn btn-ghost btn-xs" style="color:#0077cc" onclick="confirmarAbrirComanda(${a.id})" title="Abrir comanda">💇</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="confirmarAgStatus(${a.id},'Falta','❌ Marcar como FALTA para ${cNome(a.cid)}?')" title="Falta">❌</button>
+          <button class="btn btn-ghost btn-xs" style="color:var(--text3)" onclick="confirmarAgStatus(${a.id},'Cancelado','🚫 Marcar como CANCELADO para ${cNome(a.cid)}?')" title="Cancelou">🚫</button>
         `}
       </td>
     </tr>`).join('');
@@ -2595,6 +2604,25 @@ function renderAgendaLista(){
 function agStatus(id,s){
   const a=DB.agendamentos.find(x=>x.id===id);
   if(a){ a.status=s; salvarDados(); renderAgendaLista(); renderAgendaGrid(); }
+}
+
+function confirmarAgStatus(id, status, msg){
+  const a = DB.agendamentos.find(x=>x.id===id);
+  if(!a) return;
+  const cliente = cNome(a.cid);
+  const hora = a.hora;
+  if(!confirm(`${msg}\n\nCliente: ${cliente}\nHorário: ${hora}\n\nTem certeza?`)) return;
+  agStatus(id, status);
+}
+
+function confirmarAbrirComanda(agId){
+  const a = DB.agendamentos.find(x=>x.id===agId);
+  if(!a) return;
+  const cliente = cNome(a.cid);
+  const svc = sNome(a.sid);
+  const hora = a.hora;
+  if(!confirm(`💇 Abrir comanda para:\n\nCliente: ${cliente}\nServiço: ${svc}\nHorário: ${hora}\n\nConfirmar?`)) return;
+  abrirComandaDoAgendamento(agId);
 }
 
 function initModalAgend(data='',hora='',pid=null){
@@ -2831,19 +2859,18 @@ function renderItensComanda(id){
   $('fc-itens').innerHTML += `
     <div style="margin-top:12px;padding:10px;background:var(--bg);border-radius:8px;border:1.5px dashed var(--border)">
       <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">+ Adicionar serviço</div>
-      <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr auto;gap:6px;align-items:end">
+      <div style="display:grid;grid-template-columns:1.5fr 2fr 1fr auto;gap:6px;align-items:end">
         <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">SERVIÇO</div>
-          <select class="fc" id="fc-add-svc" style="padding:6px 8px;font-size:12px" onchange="preencherProfSvc()">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">PROFISSIONAL</div>
+          <select class="fc" id="fc-add-prof" style="padding:6px 8px;font-size:12px" onchange="filtrarSvcsPorProf()">
             <option value="">Selecione...</option>
-            ${DB.servicos.map(s=>`<option value="${s.id}" data-preco="${s.preco}">${s.nome}</option>`).join('')}
+            ${DB.profissionais.filter(p=>p.ativo!==false&&p.acesso==='profissional').map(p=>`<option value="${p.id}">${p.nome.split(' ')[0]}</option>`).join('')}
           </select>
         </div>
         <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">PROFISSIONAL</div>
-          <select class="fc" id="fc-add-prof" style="padding:6px 8px;font-size:12px">
-            <option value="">Selecione...</option>
-            ${DB.profissionais.filter(p=>p.ativo!==false&&p.acesso==='profissional').map(p=>`<option value="${p.id}">${p.nome.split(' ')[0]}</option>`).join('')}
+          <div style="font-size:10px;color:var(--text3);margin-bottom:3px">SERVIÇO</div>
+          <select class="fc" id="fc-add-svc" style="padding:6px 8px;font-size:12px" onchange="preencherProfSvc()">
+            <option value="">Selecione a profissional primeiro</option>
           </select>
         </div>
         <div>
@@ -2855,6 +2882,17 @@ function renderItensComanda(id){
     </div>`;
 
   $('fc-total').textContent = fmt(total);
+}
+
+function filtrarSvcsPorProf(){
+  const pid = parseInt(document.getElementById('fc-add-prof')?.value);
+  const svcSel = document.getElementById('fc-add-svc');
+  if(!svcSel) return;
+  if(!pid){ svcSel.innerHTML='<option value="">Selecione a profissional primeiro</option>'; return; }
+  const svcs = DB.servicos.filter(s=>s.ativo!==false && s.profs && s.profs.includes(pid));
+  svcSel.innerHTML = '<option value="">Selecione...</option>' +
+    svcs.map(s=>`<option value="${s.id}" data-preco="${s.preco}">${s.nome}</option>`).join('');
+  document.getElementById('fc-add-val').value = '';
 }
 
 function preencherProfSvc(){
