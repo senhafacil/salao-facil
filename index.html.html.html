@@ -2542,8 +2542,7 @@ function renderAgendaGrid(){
       });
 
       ags.forEach(a=>{
-        const cmdAberta = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
-        const status = cmdAberta ? 'Atendimento' : a.status;
+        const status = a.status;
         const statusMap = {
           'Pendente':    {bg:'#ffe0b2',border:'#e65100',cor:'#7f3000',emoji:'📅'},
           'Confirmado':  {bg:'#c8f0d0',border:'#1a7a40',cor:'#0d4a25',emoji:'✅'},
