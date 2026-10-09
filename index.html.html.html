@@ -2644,7 +2644,7 @@ function initModalAgend(data='',hora='',pid=null){
 }
 function filterServsByProf(){
   const pid=parseInt($('ag-prof')?.value);
-  const svcs=pid?DB.servicos.filter(s=>s.profs.includes(pid)):DB.servicos;
+  const svcs=pid?DB.servicos.filter(s=>s.profs&&s.profs.map(Number).includes(pid)):DB.servicos;
   populateSel('ag-servico',svcs,'id','nome');
 }
 function salvarAgend(){
@@ -2896,7 +2896,7 @@ function filtrarSvcsPorProf(){
   const svcSel = document.getElementById('fc-add-svc');
   if(!svcSel) return;
   if(!pid){ svcSel.innerHTML='<option value="">Selecione a profissional primeiro</option>'; return; }
-  const svcs = DB.servicos.filter(s=>s.ativo!==false && s.profs && s.profs.includes(pid));
+  const svcs = DB.servicos.filter(s=>s.ativo!==false && s.profs && s.profs.map(Number).includes(pid));
   svcSel.innerHTML = '<option value="">Selecione...</option>' +
     svcs.map(s=>`<option value="${s.id}" data-preco="${s.preco}">${s.nome}</option>`).join('');
   document.getElementById('fc-add-val').value = '';
