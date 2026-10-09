@@ -2633,9 +2633,9 @@ function confirmarAbrirComanda(agId){
 }
 
 function initModalAgend(data='',hora='',pid=null){
-  populateSel('ag-cliente',DB.clientes,'id','nome');
-  populateSel('ag-prof',DB.profissionais.filter(p=>p.ativo!==false),'id','nome');
-  filterServsByProf();
+  populateSel('ag-cliente',DB.clientes,'id','nome','Selecione...');
+  populateSel('ag-prof',DB.profissionais.filter(p=>p.ativo!==false),'id','nome','Selecione...');
+  $('ag-servico').innerHTML='<option value="">Selecione a profissional primeiro</option>';
   $('ag-data').value=data||getDiaAtual().toISOString().slice(0,10);
   $('ag-hora').value=hora||'09:00';
   $('ag-obs').value='';
@@ -2644,8 +2644,9 @@ function initModalAgend(data='',hora='',pid=null){
 }
 function filterServsByProf(){
   const pid=parseInt($('ag-prof')?.value);
-  const svcs=pid?DB.servicos.filter(s=>s.profs&&s.profs.map(Number).includes(pid)):DB.servicos;
-  populateSel('ag-servico',svcs,'id','nome');
+  if(!pid){ $('ag-servico').innerHTML='<option value="">Selecione a profissional primeiro</option>'; return; }
+  const svcs=DB.servicos.filter(s=>s.profs&&s.profs.map(Number).includes(pid));
+  $('ag-servico').innerHTML='<option value="">Selecione...</option>'+svcs.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
 }
 function salvarAgend(){
   const cid=parseInt($('ag-cliente').value);
