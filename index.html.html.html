@@ -2618,6 +2618,14 @@ function confirmarAgStatus(id, status, msg){
 function confirmarAbrirComanda(agId){
   const a = DB.agendamentos.find(x=>x.id===agId);
   if(!a) return;
+  // Se já tem comanda aberta para esse cliente, vai direto para ela
+  const cmdExistente = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
+  if(cmdExistente){
+    const btnComanda = document.querySelector('.nb[onclick*="comanda"]');
+    if(btnComanda) go('comanda', btnComanda);
+    setTimeout(()=>verComanda(cmdExistente.id), 100);
+    return;
+  }
   const cliente = cNome(a.cid);
   const svc = sNome(a.sid);
   const hora = a.hora;
