@@ -1536,7 +1536,7 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
       </div>
       <div class="fg" id="item-svc-wrap"><label class="fl">Serviço</label><select class="fc" id="item-servico" onchange="itemUpdatePreco()"></select></div>
       <div class="fg" id="item-prod-wrap" style="display:none"><label class="fl">Produto</label><select class="fc" id="item-produto" onchange="itemUpdatePreco()"></select></div>
-      <div class="fg"><label class="fl">Profissional</label><select class="fc" id="item-prof"></select></div>
+      <div class="fg"><label class="fl">Profissional</label><select class="fc" id="item-prof" onchange="filtrarSvcsPorProfModal()"></select></div>
       <div class="fg"><label class="fl">Valor (R$)</label><input type="number" class="fc" id="item-preco" step="0.01"></div>
     </div>
     <div class="mf"><button class="btn btn-outline" onclick="closeModal('m-add-item')">Cancelar</button><button class="btn btn-primary" onclick="addItemComanda()">Adicionar</button></div>
@@ -2781,11 +2781,17 @@ function atualizarPrecoItem(cmdId, idx, val){
 }
 function openAddItem(cmdId){
   DB.cmdAtiva=cmdId;
-  populateSel('item-servico',DB.servicos,'id','nome');
+  $('item-servico').innerHTML='<option value="">Selecione a profissional primeiro</option>';
   populateSel('item-produto',DB.estoque.filter(e=>e.venda),'id','nome');
-  populateSel('item-prof',DB.profissionais.filter(p=>p.ativo),'id','nome');
+  populateSel('item-prof',DB.profissionais.filter(p=>p.ativo),'id','nome','Selecione...');
   itemTipo('svc');
   openModal('m-add-item');
+}
+function filtrarSvcsPorProfModal(){
+  const pid=parseInt($('item-prof')?.value);
+  if(!pid){ $('item-servico').innerHTML='<option value="">Selecione a profissional primeiro</option>'; return; }
+  const svcs=DB.servicos.filter(s=>s.profs&&s.profs.map(Number).includes(pid));
+  $('item-servico').innerHTML='<option value="">Selecione...</option>'+svcs.map(s=>`<option value="${s.id}" data-preco="${s.preco}">${s.nome}</option>`).join('');
 }
 function itemTipo(t){
   $('item-tipo-svc').className='pay-btn'+(t==='svc'?' sel':'');
@@ -2804,8 +2810,10 @@ function addItemComanda(){
   const svcSel=$('item-tipo-svc').className.includes('sel');
   const preco=parseFloat($('item-preco').value)||0;
   const pid=parseInt($('item-prof').value);
+  if(!pid){alert('Selecione a profissional');return;}
   if(svcSel){
     const sid=parseInt($('item-servico').value);
+    if(!sid){alert('Selecione o serviço');return;}
     c.itens.push({tipo:'svc',refId:sid,pid,preco,nome:sNome(sid)});
   } else {
     const eid=parseInt($('item-produto').value);
@@ -3120,20 +3128,49 @@ function verHistorico(cid){
 
 // ══════════ SERVIÇOS ══════════
 function renderServicos(){
-  $('tb-servicos').innerHTML=DB.servicos.map(s=>`
-    <tr>
-      <td><strong>${s.nome}</strong></td>
-      <td><span class="chip">${s.cat}</span></td>
-      <td style="font-weight:700">${fmt(s.preco)}</td>
-      <td>${s.dur} min</td>
-      <td>${s.profs.map(pid=>`<span class="chip" style="margin:2px">${pNome(pid)} <span style="color:var(--gold);font-weight:700">${s.comiss[pid]||0}%</span></span>`).join('')}</td>
-      <td><span class="badge badge-blue">${s.vendas}</span></td>
-      <td><span class="badge ${s.ativo?'badge-green':'badge-gray'}">${s.ativo?'Ativo':'Inativo'}</span></td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-ghost btn-xs" onclick="openModalServico(${s.id})">✎</button>
-        ${usuarioLogado?.acesso==='master'?`<button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirServico(${s.id})">🗑</button>`:''}
-      </td>
-    </tr>`).join('');
+  // Agrupa por categoria e ordena alfabeticamente dentro de cada grupo
+  const grupos = {};
+  DB.servicos.forEach(s=>{
+    const cat = s.cat || 'Sem categoria';
+    if(!grupos[cat]) grupos[cat]=[];
+    grupos[cat].push(s);
+  });
+  // Ordena categorias e serviços dentro delas alfabeticamente
+  const cats = Object.keys(grupos).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  cats.forEach(cat=>{ grupos[cat].sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR')); });
+
+  const tbody = $('tb-servicos');
+  tbody.innerHTML = cats.map(cat=>{
+    const svcs = grupos[cat];
+    const catId = 'cat-'+cat.replace(/\s+/g,'-').toLowerCase();
+    return `
+      <tr style="background:var(--bg2);cursor:pointer" onclick="toggleCat('${catId}')">
+        <td colspan="8" style="font-weight:700;font-size:13px;padding:10px 14px;color:var(--rose)">
+          <span id="${catId}-icon">▼</span> ${cat} <span style="font-weight:400;font-size:12px;color:var(--text3)">(${svcs.length} serviço${svcs.length!==1?'s':''})</span>
+        </td>
+      </tr>
+      ${svcs.map(s=>`
+        <tr class="${catId}-row">
+          <td><strong>${s.nome}</strong></td>
+          <td><span class="chip">${s.cat}</span></td>
+          <td style="font-weight:700">${fmt(s.preco)}</td>
+          <td>${s.dur} min</td>
+          <td>${s.profs.map(pid=>`<span class="chip" style="margin:2px">${pNome(pid)} <span style="color:var(--gold);font-weight:700">${s.comiss[pid]||0}%</span></span>`).join('')}</td>
+          <td><span class="badge badge-blue">${s.vendas}</span></td>
+          <td><span class="badge ${s.ativo?'badge-green':'badge-gray'}">${s.ativo?'Ativo':'Inativo'}</span></td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-ghost btn-xs" onclick="openModalServico(${s.id})">✎</button>
+            ${usuarioLogado?.acesso==='master'?`<button class="btn btn-ghost btn-xs" style="color:var(--danger)" onclick="excluirServico(${s.id})">🗑</button>`:''}
+          </td>
+        </tr>`).join('')}`;
+  }).join('');
+}
+function toggleCat(catId){
+  const rows = document.querySelectorAll(`.${catId}-row`);
+  const icon = document.getElementById(`${catId}-icon`);
+  const hidden = rows[0]?.style.display==='none';
+  rows.forEach(r=>r.style.display=hidden?'':'none');
+  if(icon) icon.textContent=hidden?'▼':'▶';
 }
 function excluirServico(id){
   const s=DB.servicos.find(x=>x.id===id);
