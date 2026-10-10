@@ -1534,9 +1534,9 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
           <button class="pay-btn" id="item-tipo-prod" onclick="itemTipo('prod')">Produto</button>
         </div>
       </div>
+      <div class="fg"><label class="fl">Profissional</label><select class="fc" id="item-prof" onchange="filtrarSvcsPorProfModal()"></select></div>
       <div class="fg" id="item-svc-wrap"><label class="fl">Serviço</label><select class="fc" id="item-servico" onchange="itemUpdatePreco()"></select></div>
       <div class="fg" id="item-prod-wrap" style="display:none"><label class="fl">Produto</label><select class="fc" id="item-produto" onchange="itemUpdatePreco()"></select></div>
-      <div class="fg"><label class="fl">Profissional</label><select class="fc" id="item-prof" onchange="filtrarSvcsPorProfModal()"></select></div>
       <div class="fg"><label class="fl">Valor (R$)</label><input type="number" class="fc" id="item-preco" step="0.01"></div>
     </div>
     <div class="mf"><button class="btn btn-outline" onclick="closeModal('m-add-item')">Cancelar</button><button class="btn btn-primary" onclick="addItemComanda()">Adicionar</button></div>
