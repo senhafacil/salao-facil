@@ -2658,16 +2658,26 @@ function filterServsByProf(autoSelect){
 function salvarAgend(){
   const cid=parseInt($('ag-cliente').value);
   const pid=parseInt($('ag-prof').value);
-  // Se serviços não foram carregados ainda, carregar agora
   const svcEl=$('ag-servico');
-  if(pid && svcEl && (svcEl.options.length===0 || (svcEl.options.length===1 && !svcEl.options[0].value))){
-    filterServsByProf();
-  }
-  const sid=parseInt(svcEl?.value||'');
+  // Forçar carregamento dos serviços se necessário
+  if(pid) filterServsByProf(true);
+  // Pegar valor do select após eventual recarregamento
+  const sidRaw = svcEl?.value;
+  const sid = parseInt(sidRaw);
   const data=$('ag-data').value,hora=$('ag-hora').value;
+  console.log('salvarAgend debug:', {cid,pid,sidRaw,sid,opcoes:svcEl?.options?.length,servicos:DB.servicos.filter(s=>s.profs&&s.profs.map(Number).includes(pid)).map(s=>({id:s.id,nome:s.nome}))});
   if(!cid){alert('Selecione a cliente');return;}
   if(!pid){alert('Selecione a profissional');return;}
-  if(!sid){alert('Selecione o serviço');return;}
+  if(!sid){
+    // Tentar pegar o primeiro serviço disponível para a profissional
+    const svcs=DB.servicos.filter(s=>s.ativo!==false&&s.profs&&s.profs.map(Number).includes(pid));
+    if(svcs.length>0){
+      DB.agendamentos.push({id:DB.nextId.ag++,cid,pid,sid:svcs[0].id,data,hora,status:'Pendente',obs:$('ag-obs').value});
+      closeModal('m-agendamento');renderAgenda();salvarDados();
+      return;
+    }
+    alert('Selecione o serviço');return;
+  }
   if(!data||!hora){alert('Preencha data e horário');return;}
   DB.agendamentos.push({id:DB.nextId.ag++,cid,pid,sid,data,hora,status:'Pendente',obs:$('ag-obs').value});
   closeModal('m-agendamento');renderAgenda();salvarDados();
