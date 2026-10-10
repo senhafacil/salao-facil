@@ -2631,10 +2631,7 @@ function confirmarAbrirComanda(agId){
       <div style="font-size:12px;color:#888;margin-bottom:18px">${sNome(a.sid)} · ${a.hora} · <span style="font-weight:600;color:#b5606e">${a.status}</span></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button onclick="agStatus(${agId},'Confirmado');document.getElementById('mini-ag-modal').remove()" style="padding:10px;background:#e6f4ee;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#1a7a40;font-size:13px">✅ Confirmar presença</button>
-        ${existeComanda
-          ? `<button onclick="document.getElementById('mini-ag-modal').remove();const btn=document.querySelector('.nb[onclick*=comanda]');if(btn)go('comanda',btn);setTimeout(()=>verComanda(${cmdExistente.id}),100)" style="padding:10px;background:#e8f0fb;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#2060a0;font-size:13px">💇 Ver comanda aberta</button>`
-          : `<button onclick="document.getElementById('mini-ag-modal').remove();abrirComandaDoAgendamento(${agId})" style="padding:10px;background:#e8f0fb;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#2060a0;font-size:13px">💇 Abrir comanda</button>`
-        }
+        <button onclick="document.getElementById('mini-ag-modal').remove();abrirComandaDoAgendamento(${agId})" style="padding:10px;background:#e8f0fb;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#2060a0;font-size:13px">💇 Abrir comanda</button>
         <button onclick="confirmarAgStatus(${agId},'Falta','❌ Marcar como FALTA?');document.getElementById('mini-ag-modal').remove()" style="padding:10px;background:#fdecea;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#c0392b;font-size:13px">❌ Falta</button>
         <button onclick="confirmarAgStatus(${agId},'Cancelado','🚫 Cancelar agendamento?');document.getElementById('mini-ag-modal').remove()" style="padding:10px;background:#f5f5f5;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#666;font-size:13px">🚫 Cancelar</button>
         <button onclick="document.getElementById('mini-ag-modal').remove()" style="padding:8px;background:none;border:none;cursor:pointer;color:#999;font-size:12px;margin-top:4px">Fechar</button>
