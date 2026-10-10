@@ -2618,8 +2618,11 @@ function confirmarAbrirComanda(agId){
   const a = DB.agendamentos.find(x=>x.id===agId);
   if(!a) return;
   const cmdExistente = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
-  // Montar mini-modal de ações
-  const existeComanda = !!cmdExistente;
+  // Se já tem comanda aberta, vai direto para ela
+  if(cmdExistente){
+    abrirComandaDoAgendamento(agId);
+    return;
+  }
   const el = document.getElementById('mini-ag-modal');
   if(el) el.remove();
   const div = document.createElement('div');
