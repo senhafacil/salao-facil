@@ -2645,17 +2645,27 @@ function initModalAgend(data='',hora='',pid=null){
 function filterServsByProf(){
   const pid=parseInt($('ag-prof')?.value);
   if(!pid){ $('ag-servico').innerHTML='<option value="">Selecione a profissional primeiro</option>'; return; }
-  const svcs=DB.servicos.filter(s=>s.profs&&s.profs.map(Number).includes(pid));
+  let svcs=DB.servicos.filter(s=>s.ativo!==false && s.profs&&s.profs.map(Number).includes(pid));
+  // Se profissional não tem serviços associados, mostrar todos os serviços ativos
+  if(svcs.length===0) svcs=DB.servicos.filter(s=>s.ativo!==false);
   $('ag-servico').innerHTML='<option value="">Selecione...</option>'+svcs.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
 }
 function salvarAgend(){
   const cid=parseInt($('ag-cliente').value);
   const pid=parseInt($('ag-prof').value);
-  const sid=parseInt($('ag-servico').value);
+  // Se serviços não foram carregados ainda, carregar agora
+  const svcEl=$('ag-servico');
+  if(pid && svcEl && (svcEl.options.length===0 || (svcEl.options.length===1 && !svcEl.options[0].value))){
+    filterServsByProf();
+  }
+  const sid=parseInt(svcEl?.value||'');
   const data=$('ag-data').value,hora=$('ag-hora').value;
-  if(!cid||!pid||!sid||!data||!hora){alert('Preencha todos os campos');return;}
+  if(!cid){alert('Selecione a cliente');return;}
+  if(!pid){alert('Selecione a profissional');return;}
+  if(!sid){alert('Selecione o serviço');return;}
+  if(!data||!hora){alert('Preencha data e horário');return;}
   DB.agendamentos.push({id:DB.nextId.ag++,cid,pid,sid,data,hora,status:'Pendente',obs:$('ag-obs').value});
-  closeModal('m-agendamento');renderAgenda();
+  closeModal('m-agendamento');renderAgenda();salvarDados();
 }
 
 // ══════════ COMANDA ══════════
