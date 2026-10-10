@@ -2747,9 +2747,15 @@ function abrirComandaDoAgendamento(agId){
     DB.comandas.push(cmd);
     // Marca todos os agendamentos do dia como Atendimento
     agsDoDia.forEach(ag=>{ ag.status='Atendimento'; notificarProfissional(ag); });
-    salvarDados(true);
+  } else {
+    // Comanda já existe — garante que o agendamento clicado (e do dia) vão para Atendimento
+    const ds = a.data;
+    const agsDoDia = DB.agendamentos.filter(ag=>ag.cid===a.cid&&ag.data===ds&&ag.status!=='Cancelado'&&ag.status!=='Falta'&&ag.status!=='Concluído');
+    agsDoDia.forEach(ag=>{ ag.status='Atendimento'; });
   }
 
+  // Sempre salva e atualiza a grade antes de navegar
+  salvarDados(true);
   updateNbCmd();
   renderAgendaGrid();
 
