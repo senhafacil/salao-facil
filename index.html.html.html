@@ -2617,19 +2617,31 @@ function confirmarAgStatus(id, status, msg){
 function confirmarAbrirComanda(agId){
   const a = DB.agendamentos.find(x=>x.id===agId);
   if(!a) return;
-  // Se já tem comanda aberta para esse cliente, vai direto para ela
   const cmdExistente = DB.comandas.find(c=>c.aberta&&c.cid===a.cid);
-  if(cmdExistente){
-    const btnComanda = document.querySelector('.nb[onclick*="comanda"]');
-    if(btnComanda) go('comanda', btnComanda);
-    setTimeout(()=>verComanda(cmdExistente.id), 100);
-    return;
-  }
-  const cliente = cNome(a.cid);
-  const svc = sNome(a.sid);
-  const hora = a.hora;
-  if(!confirm(`💇 Abrir comanda para:\n\nCliente: ${cliente}\nServiço: ${svc}\nHorário: ${hora}\n\nConfirmar?`)) return;
-  abrirComandaDoAgendamento(agId);
+  // Montar mini-modal de ações
+  const existeComanda = !!cmdExistente;
+  const el = document.getElementById('mini-ag-modal');
+  if(el) el.remove();
+  const div = document.createElement('div');
+  div.id = 'mini-ag-modal';
+  div.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center';
+  div.innerHTML=`
+    <div style="background:#fff;border-radius:16px;padding:24px;min-width:280px;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.18)">
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">${cNome(a.cid)}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:18px">${sNome(a.sid)} · ${a.hora} · <span style="font-weight:600;color:#b5606e">${a.status}</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="agStatus(${agId},'Confirmado');document.getElementById('mini-ag-modal').remove()" style="padding:10px;background:#e6f4ee;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#1a7a40;font-size:13px">✅ Confirmar presença</button>
+        ${existeComanda
+          ? `<button onclick="document.getElementById('mini-ag-modal').remove();const btn=document.querySelector('.nb[onclick*=comanda]');if(btn)go('comanda',btn);setTimeout(()=>verComanda(${cmdExistente.id}),100)" style="padding:10px;background:#e8f0fb;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#2060a0;font-size:13px">💇 Ver comanda aberta</button>`
+          : `<button onclick="document.getElementById('mini-ag-modal').remove();abrirComandaDoAgendamento(${agId})" style="padding:10px;background:#e8f0fb;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#2060a0;font-size:13px">💇 Abrir comanda</button>`
+        }
+        <button onclick="confirmarAgStatus(${agId},'Falta','❌ Marcar como FALTA?');document.getElementById('mini-ag-modal').remove()" style="padding:10px;background:#fdecea;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#c0392b;font-size:13px">❌ Falta</button>
+        <button onclick="confirmarAgStatus(${agId},'Cancelado','🚫 Cancelar agendamento?');document.getElementById('mini-ag-modal').remove()" style="padding:10px;background:#f5f5f5;border:none;border-radius:8px;cursor:pointer;font-weight:600;color:#666;font-size:13px">🚫 Cancelar</button>
+        <button onclick="document.getElementById('mini-ag-modal').remove()" style="padding:8px;background:none;border:none;cursor:pointer;color:#999;font-size:12px;margin-top:4px">Fechar</button>
+      </div>
+    </div>`;
+  div.addEventListener('click',e=>{ if(e.target===div) div.remove(); });
+  document.body.appendChild(div);
 }
 
 function initModalAgend(data='',hora='',pid=null){
