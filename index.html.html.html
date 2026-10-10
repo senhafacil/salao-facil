@@ -2640,19 +2640,18 @@ function initModalAgend(data='',hora='',pid=null){
   $('ag-hora').value=hora||'09:00';
   $('ag-obs').value='';
   $('m-agendamento').dataset.editId='';
-  if(pid){ const sel=$('ag-prof'); if(sel){sel.value=pid;filterServsByProf();} }
+  if(pid){ const sel=$('ag-prof'); if(sel){sel.value=pid;filterServsByProf(true);} }
 }
-function filterServsByProf(){
+function filterServsByProf(autoSelect){
   const pid=parseInt($('ag-prof')?.value);
   if(!pid){ $('ag-servico').innerHTML='<option value="">Selecione a profissional primeiro</option>'; return; }
   let svcs=DB.servicos.filter(s=>s.ativo!==false && s.profs&&s.profs.map(Number).includes(pid));
   // Se profissional não tem serviços associados, mostrar todos os serviços ativos
   if(svcs.length===0) svcs=DB.servicos.filter(s=>s.ativo!==false);
   const opts = svcs.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
-  // Se só tem 1 serviço, selecionar automaticamente; senão mostrar placeholder
-  if(svcs.length===1){
-    $('ag-servico').innerHTML=opts;
-  } else {
+  $('ag-servico').innerHTML=opts;
+  // Se veio por onchange do usuário e tem mais de 1, adicionar placeholder
+  if(!autoSelect && svcs.length>1){
     $('ag-servico').innerHTML='<option value="">Selecione...</option>'+opts;
   }
 }
