@@ -656,6 +656,29 @@ tfoot td{padding:11px 14px;font-weight:700;border-top:2px solid var(--bg3);backg
 
   <!-- ══ FINANCEIRO ══ -->
   <div id="s-financeiro" class="section">
+
+    <!-- ══ CAIXA DO DIA ══ -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <span class="card-title">🏦 Caixa do Dia</span>
+        <span id="fin-caixa-data" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+      <div class="card-body">
+        <div id="fin-caixa-dia" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px"></div>
+      </div>
+    </div>
+
+    <!-- ══ CAIXA DO MÊS ══ -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <span class="card-title">📅 Caixa do Mês</span>
+        <span id="fin-caixa-mes-label" style="font-size:12px;color:var(--text3)"></span>
+      </div>
+      <div class="card-body">
+        <div id="fin-caixa-mes" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px"></div>
+      </div>
+    </div>
+
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
       <div><label class="fl" style="margin-bottom:3px">Mês</label><select class="fc" style="width:160px" id="fin-mes" onchange="renderFin()">
         <option value="2026-04">Abril 2026</option><option value="2026-03">Março 2026</option><option value="2026-02">Fevereiro 2026</option>
@@ -3544,7 +3567,61 @@ function finalizarVendaProf(){
 }
 
 // ══════════ FINANCEIRO ══════════
+function renderCaixaDia(){
+  const hoje = new Date().toISOString().slice(0,10);
+  const mesAtual = hoje.slice(0,7);
+  const nomeMes = new Date(mesAtual+'-01').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+
+  // Comandas fechadas hoje
+  const cmdHoje = DB.comandas.filter(c=>!c.aberta && c.fechamento && c.fechamento.slice(0,10)===hoje);
+  // Comandas fechadas no mês
+  const cmdMes = DB.comandas.filter(c=>!c.aberta && c.fechamento && c.fechamento.slice(0,10).startsWith(mesAtual));
+
+  function somarPorPgto(cmds){
+    const map={};
+    cmds.forEach(c=>{
+      const pgto = c.pgto || 'Outros';
+      const total = c.itens.reduce((s,i)=>s+(i.preco||0),0);
+      map[pgto]=(map[pgto]||0)+total;
+    });
+    return map;
+  }
+
+  const coresPgto={'Dinheiro':'#2d7a56','Pix':'#5b5bd6','Débito':'#0077cc','Crédito':'#b5606e','Outros':'#888'};
+
+  function renderCards(el, mapPgto, total){
+    if(Object.keys(mapPgto).length===0){
+      el.innerHTML='<div style="color:var(--text3);font-size:13px;grid-column:1/-1">Nenhuma comanda fechada</div>';
+      return;
+    }
+    let html=`<div style="background:var(--bg);border-radius:10px;padding:14px;text-align:center;border:2px solid var(--gold)">
+      <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px">TOTAL</div>
+      <div style="font-size:20px;font-weight:800;color:var(--gold)">${fmt(total)}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${Object.values(mapPgto).length} forma(s)</div>
+    </div>`;
+    Object.entries(mapPgto).sort((a,b)=>b[1]-a[1]).forEach(([pgto,val])=>{
+      const cor=coresPgto[pgto]||'#888';
+      html+=`<div style="background:var(--bg);border-radius:10px;padding:14px;text-align:center;border-left:4px solid ${cor}">
+        <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px">${pgto.toUpperCase()}</div>
+        <div style="font-size:18px;font-weight:700;color:${cor}">${fmt(val)}</div>
+      </div>`;
+    });
+    el.innerHTML=html;
+  }
+
+  const mapDia=somarPorPgto(cmdHoje);
+  const totDia=cmdHoje.reduce((s,c)=>s+c.itens.reduce((si,i)=>si+(i.preco||0),0),0);
+  $('fin-caixa-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  renderCards($('fin-caixa-dia'),mapDia,totDia);
+
+  const mapMes=somarPorPgto(cmdMes);
+  const totMes=cmdMes.reduce((s,c)=>s+c.itens.reduce((si,i)=>si+(i.preco||0),0),0);
+  $('fin-caixa-mes-label').textContent=nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1);
+  renderCards($('fin-caixa-mes'),mapMes,totMes);
+}
+
 function renderFin(){
+  renderCaixaDia();
   const isGerencia = usuarioLogado && usuarioLogado.acesso === 'gerencia';
   const mes=$('fin-mes').value;
   const todos=DB.financeiro.filter(f=>f.data.startsWith(mes));
