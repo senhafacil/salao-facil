@@ -2648,7 +2648,13 @@ function filterServsByProf(){
   let svcs=DB.servicos.filter(s=>s.ativo!==false && s.profs&&s.profs.map(Number).includes(pid));
   // Se profissional não tem serviços associados, mostrar todos os serviços ativos
   if(svcs.length===0) svcs=DB.servicos.filter(s=>s.ativo!==false);
-  $('ag-servico').innerHTML='<option value="">Selecione...</option>'+svcs.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
+  const opts = svcs.map(s=>`<option value="${s.id}">${s.nome}</option>`).join('');
+  // Se só tem 1 serviço, selecionar automaticamente; senão mostrar placeholder
+  if(svcs.length===1){
+    $('ag-servico').innerHTML=opts;
+  } else {
+    $('ag-servico').innerHTML='<option value="">Selecione...</option>'+opts;
+  }
 }
 function salvarAgend(){
   const cid=parseInt($('ag-cliente').value);
